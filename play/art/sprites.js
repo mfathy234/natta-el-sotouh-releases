@@ -2,12 +2,13 @@
    and tools/sprites/export.mjs writes the same list to art-out/ as PNGs. */
 
 const SPRITE_Q = 3;
-const HERO_ART = { marei: mareiArt, shams: shamsArt };
+const HERO_ART = { marei: mareiArt, shams: shamsArt, hanafy: hanafyArt, batta: battaArt, hadeel: hadeelArt, shawish: shawishArt };
 
 function spriteCatalogue() {
   const list = [];
   const add = (key, vb, w, h, svg) => list.push({ key, vb, w, h, svg });
   HEROES.forEach(h => HERO_POSES.forEach(pose => add(`hero:${h.id}:${pose}`, HERO_VB, Math.round(h.size * 146 / 130), h.size, HERO_ART[h.id](pose))));
+  LOOKS.forEach(l => add(`look:${l.id}`, LOOK_VB, 64, 64, LOOK_ART[l.id]()));
   Object.keys(PLATFORM_ART).forEach(t => PLATFORM_ART[t].forEach((fr, i) => add(`plat:${t}:${i}`, PLAT_VB, 64, 24, fr())));
   Object.keys(ENEMY_ART).forEach(t => (t === 'slipper' ? [0] : [0, 1]).forEach(f => add(`enemy:${t}:${f}`, ENEMY_VB, ENEMY_SIZE[t], ENEMY_SIZE[t], ENEMY_ART[t](f))));
   Object.keys(ITEM_ART).forEach(t => ITEM_ART[t].forEach((fr, i) => add(`item:${t}:${i}`, ITEM_VB, ITEM_SIZE[t], ITEM_SIZE[t], fr())));

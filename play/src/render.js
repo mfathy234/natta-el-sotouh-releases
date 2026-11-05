@@ -144,7 +144,7 @@ function renderHero(s) {
   const draw = x => {
     if (p.kite > 0) drawSpr('item:kite:0', x, sy - 74, { rot: Math.sin(Eng.clock * 6) * 0.12, sx: 1.3, sy: 1.3 });
     if (p.kite > 0) { ctx.save(); ctx.strokeStyle = K.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, sy - 52); ctx.lineTo(x, sy - 30); ctx.stroke(); ctx.restore(); }
-    drawSpr(`hero:${s.hero}:${heroPose(p)}`, x, sy, { ay: 0.97, sx, sy: syy, rot: p.dead ? Math.sin(s.t * 14) * 0.25 : 0 });
+    drawHero(s.hero, heroPose(p), s.worn, x, sy, { ay: 0.97, sx, sy: syy, rot: p.dead ? Math.sin(s.t * 14) * 0.25 : 0 });
     if (p.shield) {
       ctx.save(); ctx.globalAlpha = 0.28 + 0.1 * Math.sin(Eng.clock * 6);
       ctx.fillStyle = K.blueLight; ctx.strokeStyle = K.bead; ctx.lineWidth = 3;
@@ -173,10 +173,12 @@ function renderParts(s) {
 function renderRun(s) {
   renderSky(s);
   if (s.demo) return;
+  renderTwistBack(s);
   renderPlatforms(s);
   renderPickups(s);
   renderTelegraphs(s);
   renderEnemies(s);
   renderHero(s);
+  renderTwistFront(s);
   renderParts(s);
 }

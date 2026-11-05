@@ -25,6 +25,7 @@
   </div>
   <button class="round" id="pauseBtn" type="button"><img data-sprite="item:pause:0" alt=""></button>
   <button class="round" id="muteBtn" type="button"><img id="muteImg" data-sprite="item:soundOn:0" alt=""></button>
+  <div id="dailyChip" class="chip hidden"></div>
   <div id="pop" aria-live="polite"></div>
 
   <section class="screen show" id="splash" aria-label="Loading">
@@ -41,7 +42,10 @@
       </div>
       <p class="tag" data-t="tagline"></p>
       <button class="btn big" type="button" id="btnPlay" data-t="play"></button>
-      <button class="btn" type="button" id="btnHeroes" data-t="heroes"></button>
+      <div class="row">
+        <button class="btn" type="button" id="btnDaily"><span data-t="daily"></span><i class="dot hidden" id="dailyDot"></i></button>
+        <button class="btn" type="button" id="btnHeroes" data-t="shop"></button>
+      </div>
       <div class="row">
         <button class="btn ghost" type="button" id="btnControls"><span data-t="controls"></span>: <span id="controlsState"></span></button>
         <button class="btn ghost" type="button" id="btnLang" data-t="langBtn"></button>
@@ -53,8 +57,23 @@
 
   <section class="screen" id="hangar" aria-label="Heroes">
     <div class="bar"><button class="btn small" type="button" id="hangarBack" data-t="back"></button><div class="stat coin static"><img data-sprite="item:coin:0" alt=""><b id="hangarCoins">٠</b></div></div>
-    <h2 class="h2" data-t="heroes"></h2>
+    <h2 class="h2" data-t="shop"></h2>
+    <div class="tabs" id="shopTabs">
+      <button type="button" data-tab="heroes" data-t="heroes"></button>
+      <button type="button" data-tab="look" data-t="tabLook"></button>
+      <button type="button" data-tab="ups" data-t="tabUps"></button>
+    </div>
     <div class="cards" id="heroList"></div>
+    <div class="look-stage hidden" id="lookStage"></div>
+    <div class="cards" id="lookPane"></div>
+    <div class="cards" id="upList"></div>
+  </section>
+
+  <section class="screen" id="daily" aria-label="Daily challenge">
+    <div class="bar"><button class="btn small" type="button" id="dailyBack" data-t="back"></button><div class="stat coin static"><img data-sprite="item:coin:0" alt=""><b id="dailyCoins">٠</b></div></div>
+    <h2 class="h2" data-t="daily"></h2>
+    <div class="cards" id="dailyBody"></div>
+    <button class="btn big" type="button" id="dailyStart"></button>
   </section>
 
   <section class="screen dim" id="pause" aria-label="Paused">
@@ -67,7 +86,7 @@
 
   <section class="screen dim" id="over" aria-label="Game over">
     <div class="panel">
-      <img class="over-hero" id="overHero" alt="">
+      <div id="overHeroBox"></div>
       <h2 class="h2" id="overTitle"></h2>
       <p class="badge" id="overBest" data-t="newBest"></p>
       <div class="results">
@@ -75,9 +94,11 @@
         <div><small data-t="earned"></small><b id="overCoins">٠</b></div>
       </div>
       <p class="status" id="overBestLine"></p>
+      <p class="status over-daily" id="overDaily"></p>
+      <div class="over-missions" id="overMissions"></div>
       <button class="btn big" type="button" id="btnRetry" data-t="retry"></button>
       <div class="row">
-        <button class="btn ghost" type="button" id="btnOverHeroes" data-t="heroes"></button>
+        <button class="btn ghost" type="button" id="btnOverHeroes" data-t="shop"></button>
         <button class="btn ghost" type="button" id="btnOverMenu" data-t="menu"></button>
       </div>
     </div>
@@ -98,20 +119,32 @@
 <script src="src/data.js"></script>
 <script src="art/heroes.js"></script>
 <script src="art/shams.js"></script>
+<script src="art/crew.js"></script>
+<script src="art/hanafy.js"></script>
+<script src="art/batta.js"></script>
+<script src="art/hadeel.js"></script>
+<script src="art/shawish.js"></script>
+<script src="art/looks.js"></script>
 <script src="art/platforms.js"></script>
 <script src="art/enemies.js"></script>
 <script src="art/items.js"></script>
 <script src="art/world.js"></script>
 <script src="art/sprites.js"></script>
 <script src="src/save.js"></script>
+<script src="src/shop.js"></script>
+<script src="src/daily.js"></script>
+<script src="src/perks.js"></script>
+<script src="src/twist.js"></script>
 <script src="src/strings.js"></script>
 <script src="src/audio.js"></script>
 <script src="src/engine.js"></script>
 <script src="src/input.js"></script>
 <script src="src/gen.js"></script>
 <script src="src/play.js"></script>
+<script src="src/looks.js"></script>
 <script src="src/render.js"></script>
 <script src="src/ui.js"></script>
+<script src="src/shopui.js"></script>
 <script src="src/main.js"></script>
 </body>
 </html>

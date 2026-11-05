@@ -1,17 +1,22 @@
 /* One run: player physics, platforms, enemies with telegraphs, pickups, score. Pure state + update; drawing is in render.js. */
 
+/* opts: { demo, hero, startMeters, daily: { key }, loadout (from runLoadout), worn (looks the hero wears) }. */
 function newRun(opts = {}) {
   const startM = opts.startMeters || 0, py = -startM * METER;
+  const daily = opts.daily || null, load = opts.loadout || { shield: false, kiteBonus: 0, magnet: 0, coinMult: 1 };
   const s = {
+    rnd: daily ? mulberry32(seedFromKey(daily.key)) : Math.random, daily, worn: opts.worn || {}, twist: daily ? dailyTwist(daily.key) : null, target: daily ? dailyTarget(daily.key) : 0, targetHit: false,
+    stats: { coins: 0, pigeons: 0, ful: 0, kites: 0, beads: 0 }, coinMult: load.coinMult, kiteTime: PHYS.kiteTime + load.kiteBonus, firstBounceDone: false,
     t: 0, demo: Boolean(opts.demo), over: false, overT: 0, ended: false,
     cam: py - (H - 120), plats: [], coins: [], pows: [], enemies: [], parts: [], pops: [], warns: [],
     genTop: py, lastX: W / 2, unsafeRun: 0, lastPowY: py + 1e4, lastEnemyY: py + 1e4,
-    p: { x: W / 2, y: py - PHYS.halfH, vx: 0, vy: 0, face: 1, landT: 0, dead: false, inv: 0, shield: false, kite: 0, shoes: 0, hopT: 0 },
+    p: { x: W / 2, y: py - PHYS.halfH, vx: 0, vy: 0, face: 1, landT: 0, dead: false, inv: 0, shield: load.shield, kite: 0, shoes: 0, hopT: 0 },
     maxUp: startM * METER, meters: startM, coinsGot: 0, bonus: 0, milestone: 0,
     crowT: rand(...ENEMIES.crow.every), slipT: rand(...ENEMIES.slipper.every), hero: opts.hero || DEFAULT_HERO
   };
   s.cam0 = s.cam;
-  s.plats.push(makePlatform('balcony', W / 2, py));
+  s.magR = perkMagnet(s, load);
+  s.plats.push(makePlatform('balcony', W / 2, py, s.rnd));
   genUntil(s, s.cam - 700);
   return s;
 }
@@ -38,7 +43,7 @@ function landOn(s, pl) {
   let power = PHYS.bounce, sound = 'jump';
   if (spring) { power = PHYS.spring; sound = 'spring'; pl.press = 0.25; }
   else if (p.shoes > 0) { power = PHYS.shoes; p.shoes -= 1; sound = 'spring'; }
-  launch(s, power, sound);
+  launch(s, perkBounce(s, power), sound);
   puff(s, p.x, pl.y - 2, spring ? 7 : 4, pl.w);
   if (pl.type === 'cloud') pl.press = 0.4;
   if (pl.kind === 'breakable') { pl.state = 'snap'; pl.t = 0; Sound.play('snap'); }
@@ -48,7 +53,14 @@ function landOn(s, pl) {
 function killEnemy(s, e, stomp) {
   e.dead = true;
   puff(s, e.x, e.y, 7, 30, 'puff');
-  if (stomp) { s.bonus += 10; pop(s, '+' + nf(10), e.x, e.y - 20, K.gold); Sound.play('stomp'); }
+  if (stomp) {
+    s.bonus += 10; pop(s, '+' + nf(10), e.x, e.y - 20, K.gold); Sound.play('stomp');
+    if (e.type === 'pigeon') {
+      s.stats.pigeons += 1;
+      const extra = s.twist && s.twist.stompCoins;
+      if (extra) { s.coinsGot += extra * s.coinMult; s.stats.coins += extra; pop(s, '+' + nf(extra * s.coinMult), e.x, e.y - 44, K.gold); }
+    }
+  }
 }
 
 function playerHit(s, e) {
@@ -139,7 +151,7 @@ function updatePigeon(s, e, dt) {
   if (e.st === 'idle') {
     e.y = e.y0 + Math.sin(s.t * 3 + e.ph) * 6;
     const sy = e.y - s.cam;
-    if (!p.dead && sy > 10 && sy < H - 140 && p.y > e.y && Math.hypot(dxWrap(p.x, e.x), p.y - e.y) < cfg.range) { e.st = 'aim'; e.t = 0; Sound.play('warn'); }
+    if (!p.dead && !perkSpares(s, e) && sy > 10 && sy < H - 140 && p.y > e.y && Math.hypot(dxWrap(p.x, e.x), p.y - e.y) < cfg.range) { e.st = 'aim'; e.t = 0; Sound.play('warn'); }
   } else if (e.st === 'aim') {
     if (e.t < cfg.aim - cfg.lock) { e.tx = e.x + dxWrap(p.x, e.x); e.ty = p.y; }
     if (e.t >= cfg.aim) {
@@ -159,14 +171,17 @@ function collideEnemy(s, e) {
   if (Math.hypot(dx, dy) > PHYS.radius + e.r) return;
   const stompable = e.type !== 'slipper';
   if (stompable && p.vy > 120 && p.y < e.y - 2 && p.kite <= 0) { killEnemy(s, e, true); launch(s, PHYS.stomp, 'stomp'); return; }
+  if (perkSpares(s, e)) return;
   playerHit(s, e);
 }
 
 function updatePickups(s) {
   const p = s.p;
   s.coins.forEach(c => {
-    if (!c.got && Math.hypot(dxWrap(p.x, c.x), p.y - c.y) < 26) {
-      c.got = true; s.coinsGot += 1; Sound.play('coin');
+    const dx = dxWrap(p.x, c.x), dy = p.y - c.y, d = Math.hypot(dx, dy);
+    if (!c.got && s.magR > 0 && d < s.magR && d > 1 && !p.dead) { const pull = Math.min(d, (200 + 320 * (1 - d / (s.magR + 30))) * (s.dt || 0.016)); c.x = wrapX(c.x + (dx / d) * pull); c.y += (dy / d) * pull; }
+    if (!c.got && d < 26) {
+      c.got = true; s.coinsGot += s.coinMult; s.stats.coins += 1; Sound.play('coin');
       puff(s, c.x, c.y, 4, 14, 'spark');
     }
   });
@@ -174,9 +189,10 @@ function updatePickups(s) {
   s.pows.forEach(w => {
     if (w.got || Math.hypot(dxWrap(p.x, w.x), p.y - w.y) > 30) return;
     w.got = true; Sound.play('power');
-    if (w.type === 'kite') p.kite = PHYS.kiteTime;
+    if (w.type === 'kite') p.kite = s.kiteTime;
     if (w.type === 'ful') p.shoes = PHYS.shoesBounces;
     if (w.type === 'bead') p.shield = true;
+    s.stats[w.type === 'kite' ? 'kites' : w.type === 'bead' ? 'beads' : 'ful'] += 1;
     pop(s, t(w.type), p.x, p.y - 50, K.gold);
     puff(s, w.x, w.y, 6, 24, 'spark');
   });
@@ -193,7 +209,10 @@ function updateFx(s, dt) {
 /** Advance the run by dt seconds. Returns nothing; read s.over / s.ended afterwards. */
 function updateRun(s, dt) {
   s.t += dt;
+  s.dt = dt;
   updatePlayer(s, dt);
+  perkGlide(s);
+  twistMove(s, dt);
   updatePlatforms(s, dt);
   if (!s.demo) {
     updateEnemies(s, dt);
@@ -203,6 +222,7 @@ function updateRun(s, dt) {
     s.meters = Math.max(s.meters, Math.floor(s.maxUp / METER));
     if (p.y < s.cam + PHYS.camLine) s.cam = p.y - PHYS.camLine;
     genUntil(s, s.cam - 700);
+    if (s.daily && !s.targetHit && s.meters >= s.target) { s.targetHit = true; if (typeof showPop === 'function') showPop(t('targetHit')); Sound.play('mile'); }
     const ms = MILESTONES[s.milestone];
     if (ms && s.meters >= ms.m) { s.milestone++; if (typeof showPop === 'function') showPop(pick(ms)); Sound.play('mile'); }
     if (!s.over && p.y - s.cam > H + 60) { s.over = true; s.overT = 0; Sound.play('over'); }

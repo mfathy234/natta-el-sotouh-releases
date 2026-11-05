@@ -67,9 +67,67 @@ const ENEMIES = {
   minSpacingPx: 380
 };
 
+/* perk: passive effect of the hero (read by src/perks.js). bio and perk text are shown on the hero card. */
 const HEROES = [
-  { id: 'marei', ar: 'مرعي', en: 'Mar3y', price: 0, unlockScore: 0, size: 56 },
-  { id: 'shams', ar: 'شمس', en: 'Shams', price: 150, unlockScore: 250, size: 56 }
+  { id: 'marei', ar: 'مرعي', en: 'Mar3y', price: 0, unlockScore: 0, size: 56,
+    bio: { ar: 'قط السطوح الأبيض الرايق. شايف الدنيا من فوق وماشي على مهله.', en: 'The calm white rooftop cat. Sees the world from above and is in no hurry.' },
+    perk: { id: 'none', ar: 'من غير مميزات، بس أحلى شخصية', en: 'No perk, just the best personality' } },
+  { id: 'shams', ar: 'شمس', en: 'Shams', price: 150, unlockScore: 250, size: 56,
+    bio: { ar: 'عنزة السطوح بالإيشارب الأحمر. بتمضغ القش وبتنط من غير خوف.', en: 'The rooftop goat in a red scarf. Chews straw and jumps without fear.' },
+    perk: { id: 'none', ar: 'من غير مميزات، بس ذوق عالي', en: 'No perk, just good taste' } },
+  { id: 'hanafy', ar: 'عم حنفي', en: 'Hanafy', price: 250, unlockScore: 350, size: 56,
+    bio: { ar: 'حمار إمبابة الشغّيل. شايل الدنيا على ضهره وبيرفس الأرض رفسة تطلّعك.', en: 'The hard-working donkey of Imbaba. Carries the world and kicks the ground to launch you.' },
+    perk: { id: 'kick', firstBounce: 1.5, ar: 'رفسة البداية: أول نطّة أعلى مرة ونص', en: 'Kick-start: the first bounce is one and a half times higher' } },
+  { id: 'batta', ar: 'بطّة', en: 'Batta', price: 400, unlockScore: 500, size: 56,
+    bio: { ar: 'بطة الدلتا الشيك. بتشرب الشاي على مهلها وبتفرد جناحاتها لما الدنيا تقع.', en: 'The stylish duck of the Delta. Sips her tea slowly and spreads her wings when things fall apart.' },
+    perk: { id: 'glide', fallCap: 330, ar: 'تعويم: بتفرد جناحاتها وبتنزل براحة', en: 'Glide: spreads her wings and falls slowly' } },
+  { id: 'hadeel', ar: 'هديل', en: 'Hadeel', price: 550, unlockScore: 650, size: 56,
+    bio: { ar: 'حمامة زاجل رقيقة. كل الحمام صحابها وبيسلّموا عليها.', en: 'A gentle homing pigeon. Every pigeon is her friend and says hello.' },
+    perk: { id: 'pigeons', ar: 'صحبة الحمام: الحمام ما بيهاجمهاش', en: 'Pigeon pals: pigeons never attack her' } },
+  { id: 'shawish', ar: 'شاويش', en: 'Shawish', price: 700, unlockScore: 800, size: 56,
+    bio: { ar: 'كلب الحارة الكبير. صفّارته على رقبته وبيشم العملة من بعيد.', en: 'The big dog of the alley. Whistle round his neck and he sniffs out coins from afar.' },
+    perk: { id: 'nose', magnet: 95, ar: 'مناخير العملة: بيجذب العملات من بعيد', en: 'Coin nose: pulls coins in from far away' } }
+];
+
+/* Looks (cosmetics): worn per hero, one per slot. Art is in art/looks.js. */
+const LOOK_SLOTS = ['hat', 'eyes', 'neck'];
+const SLOT_NAMES = { hat: { ar: 'على الراس', en: 'Hat' }, eyes: { ar: 'على العين', en: 'Eyes' }, neck: { ar: 'على الرقبة', en: 'Neck' } };
+const LOOKS = [
+  { id: 'tarboosh', slot: 'hat', ar: 'طربوش', en: 'Tarboosh', price: 80 },
+  { id: 'jasmine', slot: 'hat', ar: 'تاج الفل', en: 'Jasmine crown', price: 120 },
+  { id: 'shades', slot: 'eyes', ar: 'نضارة شمس', en: 'Sunglasses', price: 90 },
+  { id: 'scarf', slot: 'neck', ar: 'إيشارب الماتش', en: 'Football scarf', price: 100 }
+];
+
+/* Permanent upgrades: levels[i] is what level i + 1 costs and gives. "double" is a one-run boost, bought again each time. */
+const UPGRADES = {
+  shield: { icon: 'bead', ar: 'خرزة البداية', en: 'Starting bead', descAr: 'كل جولة تبدأها وفي إيدك خرزة زرقا بتحميك', descEn: 'Every run starts with a blue bead shield', levels: [{ price: 200, value: 1 }] },
+  kite: { icon: 'kite', ar: 'خيط أطول', en: 'Longer kite', descAr: 'طيارة الورق بتطير وقت أطول', descEn: 'The kite glides for longer', levels: [{ price: 150, value: 0.6 }, { price: 300, value: 1.2 }, { price: 500, value: 1.8 }] },
+  magnet: { icon: 'coin', ar: 'مغناطيس العملة', en: 'Coin magnet', descAr: 'العملات القريبة بتجري عليك', descEn: 'Nearby coins fly to you', levels: [{ price: 120, value: 60 }, { price: 250, value: 95 }, { price: 420, value: 130 }] },
+  double: { icon: 'coin', ar: 'عملات بالضعف', en: 'Double coins', descAr: 'الجولة الجاية كل عملة بعملتين', descEn: 'Next run, every coin counts twice', boost: true, levels: [{ price: 90, value: 2 }] }
+};
+
+/* Daily challenge: one twist a day, picked from the date, the same for everyone. */
+const DAILY = {
+  twists: [
+    { id: 'wind', ar: 'سطوح الهوا', en: 'Windy rooftops', descAr: 'الهوا بيزقّك يمين وشمال، اتحكّم', descEn: 'The wind shoves you left and right', target: 130, wind: 70 },
+    { id: 'laundry', ar: 'يوم الغسيل', en: 'Laundry day', descAr: 'حبال الغسيل في كل حتة وبتتقطع', descEn: 'Laundry lines everywhere, and they snap', target: 120, weightAdd: { laundry: 5 } },
+    { id: 'pigeons', ar: 'مهرجان الحمام', en: 'Pigeon festival', descAr: 'حمام كتير بس العملات أكتر', descEn: 'Many more pigeons, but more coins too', target: 130, pigeonChance: 0.24, pigeonFrom: 10, coinChance: 0.5, stompCoins: 2, spacing: 280 },
+    { id: 'night', ar: 'جولة بالليل', en: 'Night run', descAr: 'ضلمة والنور من الدبابير المنورة', descEn: 'Dark skies, lit by fireflies', target: 150, night: true },
+    { id: 'spring', ar: 'يوم الدِش', en: 'Dish day', descAr: 'أطباق الدش النطّاطة في كل مكان', descEn: 'Bouncy satellite dishes all around', target: 190, weightAdd: { dish: 5 } }
+  ],
+  targetStep: 10, targetSteps: 5,
+  reward: { base: 80, perStreak: 20, maxStreak: 7 },
+  missionBonus: 60, keepBests: 30
+};
+
+const MISSIONS = [
+  { id: 'coins', stat: 'coins', mode: 'sum', n: 50, reward: 40, ar: 'اجمع {0} عملة', en: 'Collect {0} coins' },
+  { id: 'stomp', stat: 'pigeons', mode: 'sum', n: 3, reward: 50, ar: 'اضرب {0} حمامات من فوق', en: 'Stomp {0} pigeons' },
+  { id: 'reach', stat: 'meters', mode: 'max', n: 150, reward: 60, ar: 'اوصل {0} متر في جولة', en: 'Reach {0} m in one run' },
+  { id: 'ful', stat: 'ful', mode: 'sum', n: 3, reward: 40, ar: 'خُد {0} أطباق فول', en: 'Grab {0} bowls of ful' },
+  { id: 'kite', stat: 'kites', mode: 'sum', n: 2, reward: 45, ar: 'خُد {0} طيارات ورق', en: 'Catch {0} kites' },
+  { id: 'runs', stat: 'runs', mode: 'sum', n: 3, reward: 30, ar: 'العب {0} جولات', en: 'Play {0} runs' }
 ];
 const DEFAULT_HERO = 'marei';
 
@@ -110,6 +168,6 @@ const SAVE_KEY = 'natta.save.v1';
 
 const NATTA_DATA = {
   W, H, METER, COIN_SCORE, PHYS, PLATFORMS, WEIGHT_STOPS, GAP, MAX_UNSAFE_RUN, COIN, POWERUPS, ENEMIES,
-  HEROES, DEFAULT_HERO, CONTROL_MODES, DEFAULT_CONTROLS, CONTROLS, MILESTONES, FALL_LINES, SKY, FACADE, SAVE_KEY
+  HEROES, DEFAULT_HERO, CONTROL_MODES, DEFAULT_CONTROLS, CONTROLS, LOOK_SLOTS, SLOT_NAMES, LOOKS, UPGRADES, DAILY, MISSIONS, MILESTONES, FALL_LINES, SKY, FACADE, SAVE_KEY
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = NATTA_DATA;

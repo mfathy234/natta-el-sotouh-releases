@@ -1,15 +1,17 @@
-/* UI: screens, language, hangar, confirm dialog, mute, controls. Everything is plain DOM over the canvas. */
+/* UI: screens, language, game flow, confirm dialog, mute, controls. Everything is plain DOM over the canvas.
+   The shop (heroes, looks, upgrades) and the daily challenge screens are in shopui.js. */
 
 const $ = id => document.getElementById(id);
 const UI = { save: null, state: 'splash', run: null, demo: null, confirmYes: null, debugMeters: 0 };
 
 function setSave(next) { UI.save = next; persistSave(window.localStorage, next); }
 
-const SCREENS = ['menu', 'hangar', 'pause', 'over', 'confirm', 'splash'];
+const SCREENS = ['menu', 'hangar', 'daily', 'pause', 'over', 'confirm', 'splash'];
 function showScreen(name) {
   SCREENS.forEach(id => $(id).classList.toggle('show', id === name));
   $('hud').classList.toggle('hidden', UI.state !== 'play' && UI.state !== 'pause');
   Eng.stage.classList.toggle('playing', UI.state === 'play' || UI.state === 'pause');
+  $('dailyChip').classList.toggle('hidden', !(UI.run && UI.run.daily && (UI.state === 'play' || UI.state === 'pause')));
 }
 
 let toastTimer = 0;
@@ -36,11 +38,14 @@ function refreshText() {
   $('hangarCoins').textContent = nf(UI.save.coins);
   $('controlsState').textContent = t('ctrl_' + UI.save.controls);
   $('menuHint').textContent = t(hintKey());
+  $('dailyCoins').textContent = nf(UI.save.coins);
+  $('dailyDot').classList.toggle('hidden', dailyView(UI.save, dateKey()).done);
   $('muteImg').src = spriteSrc(UI.save.muted ? 'item:soundOff:0' : 'item:soundOn:0');
   $('muteBtn').setAttribute('aria-label', t('mute'));
   $('pauseBtn').setAttribute('aria-label', t('pause'));
   $('uHeight').textContent = t('m');
-  if ($('hangar').classList.contains('show')) renderHangar();
+  if ($('hangar').classList.contains('show')) renderShop();
+  if ($('daily').classList.contains('show')) renderDaily();
 }
 
 const coarsePointer = () => Boolean(window.matchMedia && matchMedia('(pointer: coarse)').matches);
@@ -71,10 +76,13 @@ function goMenu() {
   refreshText();
 }
 
-function startGame() {
+function startGame(daily = false) {
   Sound.start();
   Sound.play('click');
-  UI.run = newRun({ hero: UI.save.hero, startMeters: UI.debugMeters });
+  const key = dateKey(), loadout = runLoadout(UI.save), hero = UI.save.hero;
+  UI.mode = daily === true ? 'daily' : 'normal';
+  setSave(consumeBoost(UI.save));
+  UI.run = newRun({ hero, startMeters: UI.debugMeters, daily: UI.mode === 'daily' ? { key } : null, loadout, worn: wornOf(UI.save, hero) });
   UI.demo = null;
   UI.state = 'play';
   Input.reset();
@@ -85,6 +93,7 @@ function startGame() {
   showScreen(null);
   $('vHeight').textContent = nf(UI.run.meters);
   $('vCoins').textContent = nf(0);
+  dailyChipUpdate(UI.run);
 }
 
 function pauseGame() {
@@ -114,7 +123,8 @@ function trackHint(s, dt) {
 function finishRun() {
   const s = UI.run, meters = s.meters, total = score(s), prevBest = UI.save.best;
   const before = UI.save.owned;
-  setSave(recordRun(UI.save, { meters, coins: s.coinsGot }, Date.now()));
+  const res = settleRun(UI.save, s, Date.now());
+  setSave(res.save);
   UI.state = 'over';
   const line = FALL_LINES[Math.floor(Math.random() * FALL_LINES.length)];
   $('overTitle').textContent = pick(line);
@@ -122,7 +132,8 @@ function finishRun() {
   $('overCoins').textContent = nf(s.coinsGot);
   $('overBest').classList.toggle('hidden', !(meters > prevBest && meters > 0));
   $('overBestLine').textContent = t('bestIs', nf(UI.save.best) + ' ' + t('m'));
-  $('overHero').src = spriteSrc(`hero:${UI.save.hero}:slouch`);
+  $('overHeroBox').replaceChildren(heroView(UI.save.hero, 'slouch', wornOf(UI.save, UI.save.hero), 'over-hero'));
+  showRunExtras(res);
   showScreen('over');
   refreshText();
   $('overBestLine').textContent = t('bestIs', nf(UI.save.best) + ' ' + t('m'));
@@ -130,64 +141,6 @@ function finishRun() {
   if (fresh.length) toast(t('unlockedNow') + ' ' + pick(HEROES.find(h => h.id === fresh[0])));
   return total;
 }
-
-/* ---------- hangar ---------- */
-function openHangar(from) {
-  UI.hangarFrom = from;
-  UI.state = from === 'over' ? 'over' : 'menu';
-  showScreen('hangar');
-  renderHangar();
-}
-
-function renderHangar() {
-  $('hangarCoins').textContent = nf(UI.save.coins);
-  const list = $('heroList');
-  list.textContent = '';
-  HEROES.forEach(h => {
-    const owned = UI.save.owned.includes(h.id), current = UI.save.hero === h.id;
-    const card = document.createElement('div');
-    card.className = 'card' + (current ? ' current' : '') + (owned ? '' : ' locked');
-    const img = document.createElement('img');
-    img.src = spriteSrc(`hero:${h.id}:slouch`);
-    img.alt = pick(h);
-    const info = document.createElement('div');
-    info.className = 'info';
-    const name = document.createElement('span');
-    name.className = 'name';
-    name.textContent = pick(h);
-    info.appendChild(name);
-    if (!owned) {
-      const req = document.createElement('span');
-      req.className = 'req';
-      req.textContent = t('unlockWith', nf(h.price)) + ' · ' + t('orReach', nf(h.unlockScore) + ' ' + t('m'));
-      info.appendChild(req);
-    }
-    card.append(img, info);
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn small';
-    if (current) { btn.textContent = t('current'); btn.disabled = true; }
-    else if (owned) { btn.textContent = t('choose'); btn.onclick = () => { Sound.play('click'); setSave(selectHero(UI.save, h.id)); renderHangar(); }; }
-    else { btn.textContent = nf(h.price); btn.onclick = () => askBuy(h); }
-    card.appendChild(btn);
-    list.appendChild(card);
-  });
-}
-
-function askBuy(h) {
-  if (!canBuyHero(UI.save, h.id)) { toast(t('poor')); return; }
-  $('confirmTitle').textContent = t('confirmTitle', pick(h));
-  $('confirmBody').textContent = t('confirmBody', nf(h.price));
-  $('confirmYes').textContent = t('confirmBtn', pick(h), nf(h.price));
-  UI.confirmYes = () => {
-    const r = buyHero(UI.save, h.id, Date.now());
-    if (r.ok) { setSave(selectHero(r.save, h.id)); Sound.play('power'); }
-    closeConfirm();
-    renderHangar();
-  };
-  $('confirm').classList.add('show');
-}
-function closeConfirm() { $('confirm').classList.remove('show'); UI.confirmYes = null; }
 
 /* ---------- wiring ---------- */
 function toggleMute() {
@@ -206,15 +159,19 @@ async function cycleControls() {
 }
 
 function initUi() {
-  $('btnPlay').onclick = startGame;
+  $('btnPlay').onclick = () => startGame(false);
+  $('btnDaily').onclick = () => { Sound.start(); Sound.play('click'); openDaily(); };
+  $('dailyBack').onclick = () => { Sound.play('click'); goMenu(); };
+  $('dailyStart').onclick = () => startGame(true);
   $('btnHeroes').onclick = () => { Sound.start(); Sound.play('click'); openHangar('menu'); };
   $('btnControls').onclick = () => { Sound.start(); Sound.play('click'); cycleControls(); };
+  $('shopTabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) { Sound.play('click'); SHOP.tab = b.dataset.tab; ['heroList', 'lookPane', 'upList'].forEach(id => { $(id).scrollTop = 0; }); renderShop(); } };
   $('btnLang').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'lang', UI.save.lang === 'ar' ? 'en' : 'ar')); applyLang(); };
   $('muteBtn').onclick = () => { Sound.start(); toggleMute(); };
   $('pauseBtn').onclick = pauseGame;
   $('btnResume').onclick = resumeGame;
   $('btnQuit').onclick = goMenu;
-  $('btnRetry').onclick = startGame;
+  $('btnRetry').onclick = () => startGame(UI.mode === 'daily');
   $('btnOverHeroes').onclick = () => openHangar('over');
   $('btnOverMenu').onclick = goMenu;
   $('hangarBack').onclick = () => { Sound.play('click'); if (UI.hangarFrom === 'over') { UI.state = 'over'; showScreen('over'); } else goMenu(); };
@@ -224,7 +181,7 @@ function initUi() {
     if (e.repeat) return;
     if (e.code === 'KeyM') { toggleMute(); return; }
     if (e.code === 'Escape' || e.code === 'KeyP') { if (UI.state === 'play') pauseGame(); else if (UI.state === 'pause') resumeGame(); }
-    if ((e.code === 'Enter' || e.code === 'Space') && UI.state === 'over' && $('over').classList.contains('show')) startGame();
+    if ((e.code === 'Enter' || e.code === 'Space') && UI.state === 'over' && $('over').classList.contains('show')) startGame(UI.mode === 'daily');
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
 }

@@ -4,6 +4,7 @@ function hudUpdate(s) {
   const h = nf(s.meters), c = nf(s.coinsGot);
   if ($('vHeight').textContent !== h) $('vHeight').textContent = h;
   if ($('vCoins').textContent !== c) $('vCoins').textContent = c;
+  dailyChipUpdate(s);
 }
 
 let lastTime = performance.now();
