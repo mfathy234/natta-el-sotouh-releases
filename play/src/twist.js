@@ -41,7 +41,7 @@ function renderTwistBack(s) {
   const ctx = Eng.ctx;
   ctx.save();
   const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, 'rgba(14,18,58,.78)'); g.addColorStop(1, 'rgba(30,34,84,.6)');
+  g.addColorStop(0, 'rgba(30,20,64,.78)'); g.addColorStop(1, 'rgba(61,44,107,.55)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   for (let i = 0; i < 22; i++) {
     const x = (i * 83 + 20) % W, y = (i * 131) % (H * 0.7), a = 0.4 + 0.5 * Math.sin(Eng.clock * 2 + i);

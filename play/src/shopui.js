@@ -61,12 +61,13 @@ function renderHeroes() {
   const list = $('heroList');
   list.textContent = '';
   HEROES.forEach(h => {
-    const owned = UI.save.owned.includes(h.id), current = UI.save.hero === h.id;
+    const held = UI.save.owned.includes(h.id), owned = heroFlies(UI.save, h.id), current = UI.save.hero === h.id;
     const card = el('div', 'card' + (current ? ' current' : '') + (owned ? '' : ' locked'));
     const info = el('div', 'info');
     info.append(el('span', 'name', pick(h)), el('span', 'bio', pick(h.bio)));
     if (h.perk.id !== 'none') info.appendChild(el('span', 'perk', t('perk', pick(h.perk))));
-    if (!owned) info.append(el('span', 'req', t('unlockWith', nf(h.price))), el('span', 'req', t('orReach', nf(h.unlockScore) + ' ' + t('m'))));
+    if (!held) info.append(el('span', 'req', t(owned ? 'passFree' : 'unlockWith', nf(h.price))), el('span', 'req', t('orReach', nf(h.unlockScore) + ' ' + t('m'))));
+    if (owned && !held) info.appendChild(priceButton(h.price, () => askBuyHero(h), UI.save.coins >= h.price));
     card.append(heroView(h.id, 'slouch', wornOf(UI.save, h.id)), info);
     let btn;
     if (current) { btn = el('button', 'btn small', t('current')); btn.disabled = true; }
@@ -95,7 +96,7 @@ function renderLook() {
   const wearing = LOOK_SLOTS.map(sl => LOOKS.find(l => l.id === worn[sl])).filter(Boolean).map(pick).join(' · ');
   stage.append(el('span', 'name', pick(hero)), el('span', 'req', wearing ? t('wearing', wearing) : t('wearsNothing')));
   const chips = el('div', 'chips');
-  UI.save.owned.forEach(id => {
+  HEROES.filter(h => heroFlies(UI.save, h.id)).map(h => h.id).forEach(id => {
     const b = el('button', 'chip-btn' + (id === hero.id ? ' on' : ''));
     b.type = 'button';
     b.setAttribute('aria-label', pick(HEROES.find(h => h.id === id)));
@@ -112,6 +113,7 @@ function renderLook() {
     icon.alt = '';
     const info = el('div', 'info');
     info.append(el('span', 'name', pick(l)), el('span', 'req', pick(SLOT_NAMES[l.slot])));
+    if (owned && !heldLook(UI.save, l.id)) info.appendChild(priceButton(l.price, () => askBuyLook(l), UI.save.coins >= l.price));
     card.append(icon, info);
     let btn;
     if (!owned) btn = priceButton(l.price, () => askBuyLook(l), UI.save.coins >= l.price);
@@ -132,14 +134,14 @@ function renderUpgrades() {
   const list = $('upList');
   list.textContent = '';
   Object.keys(UPGRADES).forEach(key => {
-    const u = UPGRADES[key], lvl = upgradeLevel(UI.save, key), next = nextUpgrade(UI.save, key);
+    const u = UPGRADES[key], lvl = upgradeLevel(UI.save, key), next = nextUpgrade(UI.save, key), passMax = !u.boost && lvl > heldUpgradeLevel(UI.save, key);
     const card = el('div', 'card' + (lvl > 0 ? ' current' : ''));
     const icon = el('img', 'look-icon');
     icon.src = spriteSrc(`item:${u.icon}:0`);
     icon.alt = '';
     const info = el('div', 'info');
     info.append(el('span', 'name', pick(u)), el('span', 'bio', LANG.cur === 'ar' ? u.descAr : u.descEn));
-    if (!u.boost) info.appendChild(el('span', 'perk', t('levelOf', nf(lvl), nf(u.levels.length))));
+    if (!u.boost) info.appendChild(el('span', 'perk', t('levelOf', nf(lvl), nf(u.levels.length)) + (passMax ? ' · ' + t('passFree') : '')));
     card.append(icon, info);
     let btn;
     if (next) btn = priceButton(next.price, () => askBuyUpgrade(key), UI.save.coins >= next.price);

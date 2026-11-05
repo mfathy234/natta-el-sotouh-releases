@@ -106,17 +106,19 @@ const MAREI_STAND = {
   fall: { tail: [72, 100, 112, 96, 118, 62, 114, 40], mode: 'wide', beans: true, armL: 'M47 68 Q22 62 12 38', armR: 'M73 68 Q98 62 108 38', pL: [11, 33], pR: [109, 33], legL: 'M54 94 Q48 106 52 118', legR: 'M66 94 Q72 106 68 118', fL: [52, 118], fR: [68, 118] }
 };
 
-/* Couch slouch: leaning back against a cushion, body tilted, legs stretched out and crossed at the paws,
-   one paw on the belly, head turned with the half-lidded look, tail trailing out. */
+/* Couch slouch (from the photo): a 3/4 view leaning back against a cushion on the right, torso tilted back, legs stretched out
+   to the left and crossed at the paws, one front paw resting on the belly, the other lying along his side, head turned
+   with the half-lidded look, fluffy tail trailing out behind. */
 function mareiSlouch() {
-  const cushion = `<path d="M88 38 Q112 30 120 46 L122 110 Q106 122 90 116Z" fill="${K.tealLight}" ${S(4)}/><circle cx="106" cy="78" r="3.2" fill="${K.teal}" stroke="${K.ink}" stroke-width="2"/><path d="M96 46 Q108 42 116 50" stroke="${K.white}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".6"/>`;
-  return cushion + mareiTail([80, 108, 104, 120, 116, 112, 126, 116]) +
-    mareiLimb('M58 96 Q36 98 12 118') + mareiPaw(10, 119, true, 60) +
-    mareiLimb('M62 106 Q38 114 12 102') + mareiPaw(10, 101, true, 120) +
-    `<g transform="rotate(-24 68 92) translate(8 6)">${mareiBody()}${mareiChest()}</g>` +
-    mareiLimb('M78 80 Q96 84 94 104') + mareiPaw(94, 107, false) +
-    `<g transform="translate(10 12)">${mareiHead('calm', 12, -8)}</g>` +
-    mareiLimb('M60 80 Q58 92 70 96') + mareiPaw(72, 97, false, 100);
+  const cushion = `<path d="M92 30 Q114 22 124 40 L126 112 Q108 124 92 118Z" fill="${K.tealLight}" ${S(4)}/><circle cx="110" cy="76" r="3.2" fill="${K.teal}" stroke="${K.ink}" stroke-width="2"/><path d="M100 40 Q112 36 120 44" stroke="${K.white}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".6"/>`;
+  const torso = `<g transform="translate(26 -2) rotate(17 60 84)">${mareiBody()}${mareiChest()}</g>`;
+  return cushion + bushyTail([92, 100, 70, 84, 44, 84, 8, 66], MAREI.fur, 9) +
+    mareiLimb('M82 92 Q54 104 26 120') + mareiPaw(23, 121, true, 60) +
+    torso +
+    mareiLimb('M84 100 Q54 96 18 106') + mareiPaw(14, 105, true, 100) +
+    mareiLimb('M100 62 Q108 84 100 106') + mareiPaw(100, 109, false, 0) +
+    `<g transform="translate(88 36) scale(.8) translate(-60 -42)">${mareiHead('calm', 6, -9)}</g>` +
+    mareiLimb('M86 62 Q70 70 74 84') + mareiPaw(76, 86, false, 40);
 }
 
 function mareiArt(pose = 'idle') {

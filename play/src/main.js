@@ -16,6 +16,7 @@ function frame(now) {
   if (UI.state === 'play' && UI.run) {
     updateRun(UI.run, dt);
     trackHint(UI.run, dt);
+    if (UI.run.tower) syncTower(UI.run);
     renderRun(UI.run);
     hudUpdate(UI.run);
     if (UI.run.ended) finishRun();

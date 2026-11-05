@@ -33,6 +33,7 @@ function launch(s, power, sound) {
   const p = s.p;
   p.vy = -power;
   p.landT = 0.34;
+  if (power >= PHYS.shoes) { p.popT = FEEL.popTime; s.slowT = FEEL.slowTime; }
   p.hopT = 0.2;
   Sound.play(sound);
 }
@@ -77,8 +78,17 @@ function playerHit(s, e) {
 }
 
 function updatePlayer(s, dt) {
-  const p = s.p, ax = s.demo ? 0 : Input.axis(p, dt);
-  if (!p.dead) {
+  const p = s.p, ft = s.demo || p.dead ? null : Input.followTarget(p), ax = s.demo || ft ? 0 : Input.axis(p, dt);
+  let stepX = null;
+  if (ft) {
+    const d = dxWrap(ft.x, p.x);
+    stepX = clamp(d * (1 - Math.exp(-ft.follow * dt)), -ft.max * dt, ft.max * dt);
+    p.vx = clamp(stepX / dt, -PHYS.maxVx, PHYS.maxVx);
+    if (Math.abs(stepX / dt) > 40) p.face = Math.sign(stepX);
+  } else if (!p.dead && Input.effective === 'drag' && !(Input.left || Input.right)) {
+    p.vx -= clamp(p.vx, -CONTROLS.drag.release * dt, CONTROLS.drag.release * dt);
+  }
+  if (!p.dead && !ft) {
     const target = ax * PHYS.maxVx, turning = ax !== 0 && Math.sign(ax) !== Math.sign(p.vx) && p.vx !== 0;
     if (ax !== 0) { const a = PHYS.accel * (turning ? PHYS.turnBoost : 1) * dt; p.vx += clamp(target - p.vx, -a, a); }
     else p.vx -= clamp(p.vx, -PHYS.drag * dt, PHYS.drag * dt);
@@ -88,15 +98,30 @@ function updatePlayer(s, dt) {
   else p.vy += PHYS.gravity * dt;
   const prevFeet = p.y + PHYS.halfH;
   p.y += p.vy * dt;
-  p.x = wrapX(p.x + p.vx * dt);
+  p.x = wrapX(p.x + (stepX != null ? stepX : p.vx * dt));
+  if (p.pull != null) {
+    const step = p.pull * Math.min(1, dt * FEEL.pull);
+    p.x = wrapX(p.x + step);
+    p.pull -= step;
+    if (Math.abs(p.pull) < 0.5) p.pull = null;
+  }
   p.landT = Math.max(0, p.landT - dt);
+  p.popT = Math.max(0, (p.popT || 0) - dt);
   p.hopT = Math.max(0, p.hopT - dt);
   p.inv = Math.max(0, p.inv - dt);
   if (p.vy > 0 && !p.dead && p.kite <= 0) {
     const feet = p.y + PHYS.halfH;
     for (const pl of s.plats) {
       if (pl.state === 'snap' || pl.state === 'flip') continue;
-      if (prevFeet <= pl.y + PHYS.feetSlack && feet >= pl.y && Math.abs(dxWrap(p.x, pl.x)) <= pl.w / 2 + 10) { p.y = pl.y - PHYS.halfH; landOn(s, pl); break; }
+      if (prevFeet <= pl.y + PHYS.feetSlack && feet >= pl.y && Math.abs(dxWrap(p.x, pl.x)) <= pl.w / 2 + FEEL.edge) {
+        const off = dxWrap(p.x, pl.x);
+        if (Math.abs(off) > pl.w / 2 - 2) {
+          const shift = dxWrap(pl.x + Math.sign(off) * (pl.w / 2 - 2), p.x);
+          p.pull = shift;
+          if (Input.drag) Input.drag.anchorHero += shift;
+        }
+        p.y = pl.y - PHYS.halfH; landOn(s, pl); break;
+      }
     }
   }
 }
@@ -208,6 +233,8 @@ function updateFx(s, dt) {
 
 /** Advance the run by dt seconds. Returns nothing; read s.over / s.ended afterwards. */
 function updateRun(s, dt) {
+  if (s.tower) { updateTower(s, dt); return; }
+  if (s.slowT > 0) { s.slowT -= dt; dt *= FEEL.slowScale; }
   s.t += dt;
   s.dt = dt;
   updatePlayer(s, dt);

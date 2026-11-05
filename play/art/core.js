@@ -1,13 +1,13 @@
-/* Tayara El Hara: shared art primitives.
+/* Natta El Sotouh art primitives (from Tayara El Hara), Rooftop sunset palette.
    Every drawing function returns an SVG fragment string (no <svg> wrapper).
    Style rules live in CLAUDE.md: thick ink outlines, pie-cut eyes, white gloves, flat fills. */
 
 const K = {
-  ink: '#1d1612', paper: '#f4e8cc', white: '#fffaf0', red: '#d63a2f', redDark: '#9e2620', redLight: '#ef6a5f',
-  gold: '#f2b531', goldDark: '#c48a14', orange: '#f39c34', teal: '#2f8f8c', tealLight: '#57b0ac', mint: '#7cc6b0',
+  ink: '#2a1f3d', paper: '#fff4ec', white: '#fffaf0', red: '#d63a2f', redDark: '#9e2620', redLight: '#ef6a5f',
+  gold: '#ffd23f', goldDark: '#d19a0c', orange: '#f39c34', teal: '#2fbfa6', tealLight: '#6fdcc6', mint: '#9fe3d3', coral: '#e85d75', coralDark: '#b53a58', sky: '#ffb59e', lilac: '#c9a7e8', dusk: '#3d2c6b',
   blue: '#3c6fb5', blueLight: '#7fb2e5', bead: '#2459b8', sand: '#e0b77a', sandDark: '#c4935a', sandLight: '#efd6a8',
   wood: '#b07a45', woodDark: '#7d5230', grey: '#a39a90', greyDark: '#756d64', muzzle: '#e2d2b8', pink: '#f2a0a0',
-  green: '#6c8f3a', croc: '#5e8f3e', crocLight: '#7fae55', copper: '#c8743a', tea: '#b4521c', night: '#1b1f45', plum: '#3b2f6b'
+  green: '#6c8f3a', croc: '#5e8f3e', crocLight: '#7fae55', copper: '#c8743a', tea: '#b4521c', night: '#241a4a', plum: '#3d2c6b'
 };
 
 /** Ink stroke attributes. @param {number} w stroke width */

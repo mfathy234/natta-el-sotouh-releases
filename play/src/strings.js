@@ -56,6 +56,11 @@ const STR = {
   upgradeBtn: ['طوّر {0} · {1} عملة', 'Upgrade {0} · {1} coins'],
   levelOf: ['المستوى {0} من {1}', 'Level {0} of {1}'],
   maxed: ['كامل', 'Max'],
+  passTry: ['تجربة كل حاجة ببلاش · يومين', 'Try everything free · 2 days'],
+  passOn: ['اتفتح لك كل حاجة لمدة يومين!', 'Everything is unlocked for 2 days!'],
+  passEnded: ['خلصت التجربة. اللي اشتريته معاك', 'Trial over. What you bought stays'],
+  passFree: ['ببلاش', 'Free'],
+  buyForever: ['اشتري للأبد', 'Buy for good'],
   armed: ['جاهزة', 'Ready'],
   daily: ['تحدي النهارده', 'Daily challenge'],
   dTarget: ['الهدف', 'Target'],
@@ -82,6 +87,17 @@ const STR = {
   kite: ['طيارة ورق!', 'Kite!'],
   ful: ['فول! نطّات أعلى', 'Ful! Higher bounces'],
   bead: ['الخرزة بتحميك', 'The bead protects you'],
+  mode_free: ['نطّة حرة', 'Free Jump'],
+  mode_tower: ['البرج', 'The Tower'],
+  floorU: ['دور', 'fl'],
+  floor: ['الدور', 'Floor'],
+  flagSaved: ['علم الحمام! اتحفظت', 'Pigeon flag! Saved'],
+  towerLine: ['أعلى دور: {0} · هتبدأ من دور {1}', 'Best floor: {0} · you start at floor {1}'],
+  hint_tower_drag: ['اشحن بصباعك، اسحب للتصويب، وسيب!', 'Hold to charge, drag to aim, release!'],
+  hint_tower_tilt: ['دوس للشحن، أمِل للتصويب، وسيب!', 'Hold to charge, tilt to aim, release!'],
+  hint_tower_buttons: ['دوس يمين أو شمال للشحن، وسيب!', 'Hold left or right to charge, release!'],
+  hint_tower_mouse: ['دوس للشحن، حرّك الماوس للتصويب، وسيب!', 'Hold to charge, move to aim, release!'],
+  hint_tower_keys: ['المسطرة للشحن، الأسهم للتصويب، وسيب!', 'Space to charge, arrows to aim, release!'],
   shieldBroke: ['الخرزة شالت عنك الضربة', 'The bead took the hit']
 };
 
@@ -90,6 +106,15 @@ const LANG = { cur: 'ar' };
 function toArabicDigits(s) { return String(s).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]); }
 /** Format a number for the current language (Arabic-Indic digits in Arabic). */
 const nf = n => (LANG.cur === 'ar' ? toArabicDigits(n) : String(n));
+
+/** "باقي يوم و ٥ ساعات" / "1 day 5 h left" from a time left in ms. */
+function passLeftText(ms) {
+  const { days, hours } = passSplit(ms);
+  if (LANG.cur !== 'ar') return (days ? days + (days === 1 ? ' day' : ' days') : '') + (days && hours ? ' ' : '') + (hours || !days ? hours + ' h' : '') + ' left';
+  const unit = (n, one, two, few, many) => (n === 1 ? one : n === 2 ? two : nf(n) + ' ' + (n <= 10 ? few : many));
+  const d = days ? unit(days, 'يوم', 'يومين', 'أيام', 'يوم') : '', h = hours || !days ? unit(hours, 'ساعة', 'ساعتين', 'ساعات', 'ساعة') : '';
+  return 'باقي ' + [d, h].filter(Boolean).join(' و ');
+}
 
 function t(key, ...args) {
   const row = STR[key];

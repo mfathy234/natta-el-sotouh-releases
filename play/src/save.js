@@ -3,6 +3,7 @@
 
 const SAVE_VERSION = 2;
 const FREE_HEROES = ['marei'];
+const HOUR_MS = 3600 * 1000;
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 const toInt = (v, min, max) => (Number.isFinite(Number(v)) ? Math.max(min, Math.min(max, Math.floor(Number(v)))) : min);
@@ -17,7 +18,7 @@ function newMissions() { return { date: '', prog: {}, done: [] }; }
 function newSave(now = 0) {
   return {
     v: SAVE_VERSION, createdAt: now, updatedAt: now, hero: DEFAULT_HERO, owned: [...FREE_HEROES], best: 0, coins: 0, runs: 0, lang: 'ar', muted: false, controls: DEFAULT_CONTROLS, hintSeen: false,
-    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions()
+    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions(), mode: 'free', tower: newTowerSave(), passUntil: 0
   };
 }
 
@@ -49,10 +50,11 @@ function sanitizeMissions(raw) {
 }
 
 /** Validate anything read from storage. Returns a clean save, or null when it is not a save. Older saves load unchanged (new fields default). */
-function sanitizeSave(raw) {
+function sanitizeSave(raw, now = Date.now()) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   if (!('best' in raw) && !('coins' in raw) && !('owned' in raw) && !('hero' in raw)) return null;
   const known = heroIds();
+  const passUntil = Number(raw.passUntil) > now ? Math.min(Math.floor(Number(raw.passUntil)), now + PASS.hours * HOUR_MS) : 0;
   const owned = [...new Set([...FREE_HEROES, ...(Array.isArray(raw.owned) ? raw.owned : [])])].filter(id => known.includes(id));
   const controls = CONTROL_MODES.includes(raw.controls) ? raw.controls : raw.tilt === true ? 'tilt' : DEFAULT_CONTROLS;
   const looks = [...new Set(Array.isArray(raw.looks) ? raw.looks : [])].filter(id => LOOKS.some(l => l.id === id));
@@ -61,7 +63,7 @@ function sanitizeSave(raw) {
     v: SAVE_VERSION,
     createdAt: toInt(raw.createdAt, 0, 9e15),
     updatedAt: toInt(raw.updatedAt, 0, 9e15),
-    hero: owned.includes(raw.hero) ? raw.hero : DEFAULT_HERO,
+    hero: owned.includes(raw.hero) || (passUntil > 0 && known.includes(raw.hero)) ? raw.hero : DEFAULT_HERO,
     owned,
     best: toInt(raw.best, 0, 1e7),
     coins: toInt(raw.coins, 0, 1e9),
@@ -71,11 +73,14 @@ function sanitizeSave(raw) {
     controls,
     hintSeen: raw.hintSeen === true,
     looks,
-    worn: sanitizeWorn(raw.worn, looks),
+    worn: sanitizeWorn(raw.worn, passUntil > 0 ? LOOKS.map(l => l.id) : looks),
     ups: { shield: toInt(ups.shield, 0, UPGRADES.shield.levels.length), kite: toInt(ups.kite, 0, UPGRADES.kite.levels.length), magnet: toInt(ups.magnet, 0, UPGRADES.magnet.levels.length) },
     boost: { double: asObject(raw.boost).double === true },
     daily: sanitizeDaily(raw.daily),
-    missions: sanitizeMissions(raw.missions)
+    missions: sanitizeMissions(raw.missions),
+    mode: raw.mode === 'tower' ? 'tower' : 'free',
+    tower: sanitizeTower(raw.tower),
+    passUntil
   };
 }
 
@@ -103,8 +108,57 @@ function buyHero(save, id, now = 0) {
   return { ok: true, save: { ...save, coins: save.coins - h.price, owned: [...save.owned, id], updatedAt: now } };
 }
 
-const selectHero = (save, id) => (save.owned.includes(id) ? { ...save, hero: id } : save);
+/* ---------- The quick pass: free access while save.passUntil is in the future; nothing is granted for good ---------- */
+const passClock = { now: () => Date.now() };
+const passActive = (save, now = passClock.now()) => Boolean(save) && save.passUntil > now;
+const passRemaining = (save, now = passClock.now()) => (passActive(save, now) ? save.passUntil - now : 0);
+
+/** Whole days and leftover hours of a time left, rounded up to the hour so it never shows zero while it still runs. */
+function passSplit(ms) {
+  const total = ms <= 0 ? 0 : Math.ceil(ms / HOUR_MS);
+  return { days: Math.floor(total / 24), hours: total % 24 };
+}
+
+/** Starts a pass now. One that is already running is left alone; an ended one can be started again. */
+const startPass = (save, now = passClock.now()) => (passActive(save, now) ? save : { ...save, passUntil: now + PASS.hours * HOUR_MS, updatedAt: now });
+
+/** True when this hero can be played now: owned for good, or any hero while the pass runs. */
+const heroFlies = (save, id, now = passClock.now()) => Boolean(heroById(id)) && (save.owned.includes(id) || passActive(save, now));
+
+/** After the pass ends: the chosen hero and worn looks fall back to what is owned for good. Returns the same save when nothing changes. */
+function settlePass(save, now = passClock.now()) {
+  if (passActive(save, now)) return save;
+  const hero = save.owned.includes(save.hero) ? save.hero : DEFAULT_HERO;
+  const worn = sanitizeWorn(save.worn, save.looks);
+  const same = hero === save.hero && JSON.stringify(worn) === JSON.stringify(save.worn) && !save.passUntil;
+  return same ? save : { ...save, hero, worn, passUntil: 0 };
+}
+
+const selectHero = (save, id) => (heroFlies(save, id) ? { ...save, hero: id } : save);
 const setSetting = (save, key, value) => sanitizeSave({ ...save, [key]: value }) || save;
+
+/* ---------- The Tower: best floor, last checkpoint (a multiple of TOWER.checkEvery), runs and rooftop wins ---------- */
+const newTowerSave = () => ({ best: 0, checkpoint: 0, runs: 0, wins: 0, hintSeen: false });
+
+function sanitizeTower(raw) {
+  const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const every = TOWER.checkEvery, snapCp = n => Math.floor(toInt(n, 0, TOWER.top) / every) * every;
+  const checkpoint = snapCp(r.checkpoint);
+  return { best: Math.max(toInt(r.best, 0, TOWER.top), checkpoint), checkpoint, runs: toInt(r.runs, 0, 1e9), wins: toInt(r.wins, 0, 1e9), hintSeen: r.hintSeen === true };
+}
+
+/** Note progress mid-run: the best floor and the highest checkpoint only ever go up. */
+function towerProgress(save, floor, now = 0) {
+  const every = TOWER.checkEvery, f = toInt(floor, 0, TOWER.top), tw = save.tower;
+  const checkpoint = Math.max(tw.checkpoint, Math.floor(f / every) * every);
+  return { ...save, tower: { ...tw, best: Math.max(tw.best, f), checkpoint }, updatedAt: now };
+}
+
+/** Bank a finished Tower run: progress, coins, run count, and a win when the rooftop was reached. */
+function recordTower(save, result, now = 0) {
+  const next = towerProgress(save, result.floor, now);
+  return { ...next, coins: save.coins + toInt(result.coins, 0, 1e6), runs: save.runs + 1, tower: { ...next.tower, runs: next.tower.runs + 1, wins: next.tower.wins + (result.won ? 1 : 0) } };
+}
 
 function loadSave(storage) {
   try {
@@ -117,5 +171,5 @@ function persistSave(storage, save) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { newSave, sanitizeSave, recordRun, canBuyHero, buyHero, selectHero, setSetting, loadSave, persistSave, earnedHeroes };
+  module.exports = { newSave, sanitizeSave, recordRun, canBuyHero, buyHero, selectHero, setSetting, loadSave, persistSave, earnedHeroes, passActive, passRemaining, passSplit, startPass, heroFlies, settlePass, passClock, sanitizeTower, towerProgress, recordTower };
 }

@@ -38,19 +38,32 @@ function refreshText() {
   $('hangarCoins').textContent = nf(UI.save.coins);
   $('controlsState').textContent = t('ctrl_' + UI.save.controls);
   $('menuHint').textContent = t(hintKey());
+  refreshPass();
   $('dailyCoins').textContent = nf(UI.save.coins);
   $('dailyDot').classList.toggle('hidden', dailyView(UI.save, dateKey()).done);
   $('muteImg').src = spriteSrc(UI.save.muted ? 'item:soundOff:0' : 'item:soundOn:0');
   $('muteBtn').setAttribute('aria-label', t('mute'));
   $('pauseBtn').setAttribute('aria-label', t('pause'));
-  $('uHeight').textContent = t('m');
+  $('uHeight').textContent = t(UI.run && UI.run.tower ? 'floorU' : 'm');
+  refreshModeUi();
   if ($('hangar').classList.contains('show')) renderShop();
   if ($('daily').classList.contains('show')) renderDaily();
 }
 
 const coarsePointer = () => Boolean(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 const availableModes = () => CONTROL_MODES.filter(m => m !== 'mouse' || !coarsePointer());
+function refreshModeUi() {
+  const tower = UI.save.mode === 'tower';
+  $('btnModeFree').classList.toggle('on', !tower);
+  $('btnModeTower').classList.toggle('on', tower);
+  $('menuTowerLine').classList.toggle('hidden', !tower);
+  $('menuFreeLine').classList.toggle('hidden', tower);
+  $('menuTowerLine').textContent = t('towerLine', nf(UI.save.tower.best), nf(towerStartFloor()));
+}
+const towerStartFloor = () => (UI.save.tower.checkpoint >= TOWER.top ? 0 : UI.save.tower.checkpoint);
+
 function hintKey() {
+  if (UI.save.mode === 'tower') return 'hint_tower_' + (!coarsePointer() && UI.save.controls === 'drag' ? 'keys' : UI.save.controls);
   if (!coarsePointer() && UI.save.controls === 'drag') return 'hint_keys';
   return 'hint_' + UI.save.controls;
 }
@@ -65,10 +78,38 @@ function applyLang() {
   refreshText();
 }
 
+/* ---------- quick pass ---------- */
+function refreshPass() {
+  const on = passActive(UI.save), text = on ? passLeftText(passRemaining(UI.save)) : '';
+  ['passChipMenu', 'passChipShop'].forEach(id => { $(id).classList.toggle('hidden', !on); $(id).textContent = text; });
+  $('btnPass').classList.toggle('hidden', on);
+}
+
+/** Once the pass has ended, the equipped hero and looks fall back to what is owned for good. */
+function settleNow() {
+  const next = settlePass(UI.save);
+  if (next === UI.save) return false;
+  setSave(next);
+  if (UI.demo) UI.demo = newRun({ demo: true, hero: UI.save.hero });
+  toast(t('passEnded'));
+  refreshText();
+  return true;
+}
+
+function startPassNow() {
+  Sound.start();
+  Sound.play('power');
+  setSave(startPass(UI.save, Date.now()));
+  toast(t('passOn'));
+  refreshText();
+}
+
 function applyMute() { Sound.setMuted(UI.save.muted); }
 
 /* ---------- flow ---------- */
 function goMenu() {
+  const settled = settlePass(UI.save);
+  if (settled !== UI.save) setSave(settled);
   UI.state = 'menu';
   UI.run = null;
   UI.demo = newRun({ demo: true, hero: UI.save.hero });
@@ -81,16 +122,20 @@ function startGame(daily = false) {
   Sound.play('click');
   const key = dateKey(), loadout = runLoadout(UI.save), hero = UI.save.hero;
   UI.mode = daily === true ? 'daily' : 'normal';
-  setSave(consumeBoost(UI.save));
-  UI.run = newRun({ hero, startMeters: UI.debugMeters, daily: UI.mode === 'daily' ? { key } : null, loadout, worn: wornOf(UI.save, hero) });
+  if (UI.mode === 'normal' && UI.save.mode === 'tower') UI.run = newTower({ hero, startFloor: towerStartFloor() });
+  else {
+    setSave(consumeBoost(UI.save));
+    UI.run = newRun({ hero, startMeters: UI.debugMeters, daily: UI.mode === 'daily' ? { key } : null, loadout, worn: wornOf(UI.save, hero) });
+  }
   UI.demo = null;
   UI.state = 'play';
   Input.reset();
   Input.calibrate();
   if (UI.save.controls === 'tilt' && !Input.tiltOn) enableTilt().then(ok => { if (!ok) toast(t('tiltDenied')); });
   UI.moved = 0;
-  showRunHint(!UI.save.hintSeen);
+  showRunHint(UI.run.tower ? !UI.save.tower.hintSeen : !UI.save.hintSeen);
   showScreen(null);
+  $('uHeight').textContent = t(UI.run.tower ? 'floorU' : 'm');
   $('vHeight').textContent = nf(UI.run.meters);
   $('vCoins').textContent = nf(0);
   dailyChipUpdate(UI.run);
@@ -108,19 +153,49 @@ function showRunHint(on) {
   const el = $('runHint');
   if (on) {
     $('runHintText').textContent = t(hintKey());
-    el.classList.toggle('keys', hintKey() !== 'hint_drag');
+    el.classList.toggle('keys', !hintKey().endsWith('_drag'));
   }
+  el.classList.toggle('tower', Boolean(UI.run && UI.run.tower));
   el.classList.toggle('hidden', !on);
 }
 
 /** Hide the first-run hint once the hero has really moved sideways. */
 function trackHint(s, dt) {
+  if (s.tower) {
+    if (!UI.save.tower.hintSeen && s.jumps >= 1) { showRunHint(false); setSave(setSetting(UI.save, 'tower', { ...UI.save.tower, hintSeen: true })); }
+    return;
+  }
   if (UI.save.hintSeen || $('runHint').classList.contains('hidden')) return;
   UI.moved += Math.abs(s.p.vx) * dt;
   if (UI.moved > CONTROLS.hintMoves) { showRunHint(false); setSave(setSetting(UI.save, 'hintSeen', true)); }
 }
 
+/** Keep the saved best floor and checkpoint in step with the run, so quitting never loses them. */
+function syncTower(s) {
+  if (!s.progress && !s.cpHit) return;
+  s.progress = s.cpHit = false;
+  setSave(towerProgress(UI.save, s.maxFloor, Date.now()));
+}
+function bankTower(s) {
+  if (s.banked) return;
+  s.banked = true;
+  setSave(recordTower(UI.save, { floor: s.maxFloor, coins: s.coinsGot, won: s.won }, Date.now()));
+}
+function finishTower() {
+  const s = UI.run;
+  bankTower(s);
+  UI.state = 'over';
+  $('overTitle').textContent = s.won ? pick(TOWER_LINES.win) : pick(FALL_LINES[0]);
+  $('overHeight').textContent = nf(s.maxFloor) + ' ' + t('floorU');
+  $('overCoins').textContent = nf(s.coinsGot);
+  $('overBest').classList.add('hidden');
+  $('overBestLine').textContent = t('towerLine', nf(UI.save.tower.best), nf(towerStartFloor()));
+  $('overHero').src = spriteSrc(`hero:${UI.save.hero}:slouch`);
+  showScreen('over');
+}
+
 function finishRun() {
+  if (UI.run.tower) return finishTower();
   const s = UI.run, meters = s.meters, total = score(s), prevBest = UI.save.best;
   const before = UI.save.owned;
   const res = settleRun(UI.save, s, Date.now());
@@ -163,6 +238,8 @@ function initUi() {
   $('btnDaily').onclick = () => { Sound.start(); Sound.play('click'); openDaily(); };
   $('dailyBack').onclick = () => { Sound.play('click'); goMenu(); };
   $('dailyStart').onclick = () => startGame(true);
+  $('btnPass').onclick = startPassNow;
+  setInterval(() => { if (UI.state !== 'play' && UI.state !== 'pause' && UI.state !== 'splash') { if (!settleNow()) refreshPass(); } }, 15000);
   $('btnHeroes').onclick = () => { Sound.start(); Sound.play('click'); openHangar('menu'); };
   $('btnControls').onclick = () => { Sound.start(); Sound.play('click'); cycleControls(); };
   $('shopTabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) { Sound.play('click'); SHOP.tab = b.dataset.tab; ['heroList', 'lookPane', 'upList'].forEach(id => { $(id).scrollTop = 0; }); renderShop(); } };
@@ -170,7 +247,9 @@ function initUi() {
   $('muteBtn').onclick = () => { Sound.start(); toggleMute(); };
   $('pauseBtn').onclick = pauseGame;
   $('btnResume').onclick = resumeGame;
-  $('btnQuit').onclick = goMenu;
+  $('btnQuit').onclick = () => { if (UI.run && UI.run.tower) bankTower(UI.run); goMenu(); };
+  $('btnModeFree').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'mode', 'free')); refreshText(); };
+  $('btnModeTower').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'mode', 'tower')); refreshText(); };
   $('btnRetry').onclick = () => startGame(UI.mode === 'daily');
   $('btnOverHeroes').onclick = () => openHangar('over');
   $('btnOverMenu').onclick = goMenu;

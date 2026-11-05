@@ -2,15 +2,25 @@
    Every mode ends in Input.axis(p, dt): -1 = full speed left, +1 = full speed right, in screen terms (never mirrored by dir=rtl). */
 
 const Input = {
-  left: false, right: false, mode: DEFAULT_CONTROLS,
+  left: false, right: false, space: false, mode: DEFAULT_CONTROLS,
   touch: new Map(), drag: null, mouseX: 0, mouseIn: false, worldX: 0,
   tiltOn: false, tiltSeen: false, tiltRaw: 0, tiltSm: 0, tiltNeutral: null,
   stage: null,
   setMode(m) { this.mode = CONTROL_MODES.includes(m) ? m : DEFAULT_CONTROLS; this.drag = null; this.touch.clear(); },
-  reset() { this.left = this.right = false; this.touch.clear(); this.drag = null; this.mouseIn = false; },
+  reset() { this.left = this.right = this.space = false; this.touch.clear(); this.drag = null; this.mouseIn = false; },
   calibrate() { this.tiltNeutral = this.tiltSeen ? this.tiltSm : null; },
   get tiltUsable() { return this.tiltOn && this.tiltSeen; },
   get effective() { return this.mode === 'tilt' && !this.tiltUsable ? 'drag' : this.mode; },
+  /** Hold = a finger or mouse button is down, or Space. The Tower charges while this is true. */
+  get holding() { return Boolean(this.drag) || this.space; },
+  /** Direct follow: where the hero should be right now (null = use the axis and momentum path). Keys always win. */
+  followTarget(p) {
+    if (this.left || this.right) return null;
+    const m = this.effective, D = this.drag;
+    if (m === 'drag' && D) return { x: D.anchorHero + (D.fingerX - D.anchorFinger) * CONTROLS.drag.gain, follow: CONTROLS.drag.follow, max: CONTROLS.drag.maxSpeed };
+    if (m === 'mouse' && this.mouseIn && !D && Math.abs(dxWrap(this.mouseX, p.x)) >= CONTROLS.mouse.dead) return { x: this.mouseX, follow: CONTROLS.mouse.follow, max: CONTROLS.mouse.maxSpeed };
+    return null;
+  },
   dragAxis(p) {
     const D = Input.drag, C = CONTROLS.drag;
     if (!D) return 0;
@@ -57,7 +67,7 @@ function tiltAngle(beta, gamma, screenAngle) {
 }
 
 function initInput(isPlaying) {
-  const keyMap = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
+  const keyMap = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'space' };
   addEventListener('keydown', e => { const k = keyMap[e.code]; if (k) { Input[k] = true; if (isPlaying()) e.preventDefault(); } });
   addEventListener('keyup', e => { const k = keyMap[e.code]; if (k) Input[k] = false; });
   addEventListener('blur', () => Input.reset());

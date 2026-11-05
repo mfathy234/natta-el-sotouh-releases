@@ -1,26 +1,50 @@
 /* Backgrounds: low-contrast parallax pieces. Ink is a light warm grey-brown and thin, colours are
    lifted towards the haze, so platforms, enemies and coins are always the loudest things on screen. */
 
-const BG_INK = '#c3b49a';
+const BG_INK = '#cf98ae';
 const BG_STROKE = `stroke="${BG_INK}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"`;
-const HAZE = { wall: '#f1dfb8', wall2: '#ead3a2', win: '#d8c39c', shut: '#cfdcc8', dome: '#e4d6b4', tank: '#cdd6d8', brick: '#e6cfa4', cloud: '#fffaf0', minaret: '#e6d9b8' };
+const HAZE = { wall: '#f9b9a6', wall2: '#eea496', frame: '#f6d0c4', glass: '#c4aedc', green: '#b6d4c3', wood: '#d9937c', woodDark: '#c77f6e', plant: '#9fc4a0', dome: '#f0b3b6', tank: '#d7b3d6', brick: '#eea5a0', cloud: '#fff4ec', minaret: '#f2bcc0', far: '#dfa7bf' };
 
-/* The apartment block seen from outside: only the edges carry detail, the middle stays clear. */
+/* The apartment block seen from outside: Cairo windows with louvred shutters, a mashrabiya bay and a balcony.
+   Only the edges carry detail, the middle stays clear. */
 function facadeArt() {
-  const win = (x, y) => `<rect x="${x}" y="${y}" width="46" height="70" rx="4" fill="${HAZE.win}" ${BG_STROKE}/>` +
-    `<rect x="${x - 6}" y="${y - 6}" width="58" height="8" rx="3" fill="${HAZE.wall2}" ${BG_STROKE}/>` +
-    `<rect x="${x - 14}" y="${y}" width="18" height="70" rx="3" fill="${HAZE.shut}" ${BG_STROKE}/><rect x="${x + 42}" y="${y}" width="18" height="70" rx="3" fill="${HAZE.shut}" ${BG_STROKE}/>`;
+  const louvre = (x, y, w, h) => {
+    let d = '';
+    for (let yy = y + 8; yy < y + h - 4; yy += 8) d += `M${x + 3} ${yy} H${x + w - 3} `;
+    return `<path d="${d}" stroke="${BG_INK}" stroke-width="1.5" stroke-linecap="round"/>`;
+  };
+  const leaf = (x, y, w, h, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c}" ${BG_STROKE}/>` + louvre(x, y, w, h);
+  const win = (x, y, w, h, c) =>
+    `<path d="M${x - 5} ${y + h + 5} V${y + 10} Q${x - 5} ${y - 6} ${x + w / 2} ${y - 6} Q${x + w + 5} ${y - 6} ${x + w + 5} ${y + 10} V${y + h + 5}Z" fill="${HAZE.frame}" ${BG_STROKE}/>` +
+    `<path d="M${x} ${y + h} V${y + 10} Q${x} ${y} ${x + w / 2} ${y} Q${x + w} ${y} ${x + w} ${y + 10} V${y + h}Z" fill="${HAZE.glass}" ${BG_STROKE}/>` +
+    `<path d="M${x + w / 2} ${y} V${y + h} M${x} ${y + h * 0.45} H${x + w}" ${BG_STROKE}/>` +
+    leaf(x - 24, y, 19, h, c) + leaf(x + w + 5, y, 19, h, c) +
+    `<rect x="${x - 8}" y="${y + h + 5}" width="${w + 16}" height="7" rx="3" fill="${HAZE.wall2}" ${BG_STROKE}/>`;
+  const bay = (x, y) => {
+    let lat = '';
+    for (let i = 1; i < 6; i++) lat += `M${x + i * 10} ${y + 12} V${y + 94} `;
+    for (let j = 1; j < 8; j++) lat += `M${x + 4} ${y + 12 + j * 10.5} H${x + 56} `;
+    return `<path d="M${x - 4} ${y + 14} L${x + 6} ${y} H${x + 54} L${x + 64} ${y + 14}Z" fill="${HAZE.woodDark}" ${BG_STROKE}/>` +
+      `<rect x="${x}" y="${y + 12}" width="60" height="86" rx="3" fill="${HAZE.wood}" ${BG_STROKE}/><path d="${lat}" stroke="${BG_INK}" stroke-width="1.6"/>` +
+      `<rect x="${x - 6}" y="${y + 98}" width="72" height="8" rx="3" fill="${HAZE.wall2}" ${BG_STROKE}/>`;
+  };
+  const balcony = (x, y) => {
+    let bal = '';
+    for (let i = 0; i <= 8; i++) bal += `M${x + 4 + i * 9} ${y + 52} V${y + 74} `;
+    return `<rect x="${x + 10}" y="${y}" width="44" height="74" rx="3" fill="${HAZE.frame}" ${BG_STROKE}/>` +
+      leaf(x + 14, y + 6, 17, 66, HAZE.green) + leaf(x + 33, y + 6, 17, 66, HAZE.green) +
+      `<path d="${bal}" ${BG_STROKE}/><path d="M${x} ${y + 52} H${x + 76}" stroke="${BG_INK}" stroke-width="3" stroke-linecap="round"/>` +
+      `<rect x="${x - 4}" y="${y + 74}" width="84" height="9" rx="3" fill="${HAZE.wall2}" ${BG_STROKE}/>`;
+  };
   return `<rect width="360" height="320" fill="${HAZE.wall}"/>` +
     `<path d="M0 0 H360 M0 160 H360" stroke="${HAZE.wall2}" stroke-width="10"/>` +
-    win(26, 40) + win(292, 200) +
-    `<rect x="318" y="30" width="10" height="130" fill="${HAZE.wall2}" ${BG_STROKE}/>` +
-    `<rect x="28" y="214" width="40" height="22" rx="4" fill="${HAZE.cloud}" ${BG_STROKE}/>` +
+    win(52, 40, 38, 66, HAZE.green) + bay(284, 22) + balcony(14, 192) + win(304, 204, 34, 62, HAZE.wood) +
     `<path d="M0 0 V320 M360 0 V320" stroke="${HAZE.wall2}" stroke-width="14"/>`;
 }
 
 /* Distant Cairo: blocks with water tanks, a dome and a minaret, in one flat haze colour. */
 function skylineArt() {
-  const block = (x, y, w, c = HAZE.wall2) => `<rect x="${x}" y="${y}" width="${w}" height="${220 - y}" fill="${c}" ${BG_STROKE}/>`;
+  const block = (x, y, w, c = HAZE.far) => `<rect x="${x}" y="${y}" width="${w}" height="${220 - y}" fill="${c}" ${BG_STROKE}/>`;
   const tank = (x, y) => `<rect x="${x}" y="${y - 12}" width="16" height="12" rx="3" fill="${HAZE.tank}" ${BG_STROKE}/><path d="M${x + 3} ${y} v4 M${x + 13} ${y} v4" ${BG_STROKE}/>`;
   return block(0, 120, 70) + tank(10, 120) + block(60, 84, 54, HAZE.brick) + tank(78, 84) +
     `<path d="M120 220 V110 Q150 60 180 110 V220Z" fill="${HAZE.dome}" ${BG_STROKE}/><path d="M150 62 v-14 M144 52 h12" ${BG_STROKE}/>` +
@@ -33,7 +57,7 @@ function skylineArt() {
 function rooftopsArt() {
   const tank = x => `<rect x="${x}" y="92" width="34" height="26" rx="8" fill="${HAZE.tank}" ${BG_STROKE}/><path d="M${x + 6} 118 l-4 24 M${x + 28} 118 l4 24" ${BG_STROKE}/>`;
   const tower = x => `<path d="M${x} 150 L${x + 8} 70 H${x + 40} L${x + 48} 150Z" fill="${HAZE.brick}" ${BG_STROKE}/><path d="M${x + 6} 70 L${x + 24} 44 L${x + 42} 70Z" fill="${HAZE.dome}" ${BG_STROKE}/>` +
-    [0, 1, 2].map(i => `<circle cx="${x + 14 + i * 10}" cy="${92 + i % 2 * 12}" r="3" fill="${HAZE.win}"/>`).join('');
+    [0, 1, 2].map(i => `<circle cx="${x + 14 + i * 10}" cy="${92 + i % 2 * 12}" r="3" fill="${HAZE.glass}"/>`).join('');
   return `<rect y="140" width="360" height="60" fill="${HAZE.wall2}" ${BG_STROKE}/>` +
     tank(20) + tower(90) + tank(190) + tower(262) +
     `<path d="M10 120 H80 M300 100 V150" ${BG_STROKE}/><path d="M24 120 l4 14 h10 l4 -14" fill="${HAZE.cloud}" ${BG_STROKE}/>` +
@@ -61,7 +85,7 @@ function sunArt() {
 }
 
 function moonArt() {
-  return `<circle cx="64" cy="64" r="34" fill="${K.sandLight}" stroke="${BG_INK}" stroke-width="2.5"/><circle cx="76" cy="54" r="29" fill="#2e386f"/>`;
+  return `<circle cx="64" cy="64" r="34" fill="${K.sandLight}" stroke="${BG_INK}" stroke-width="2.5"/><circle cx="76" cy="54" r="29" fill="#3f2f70"/>`;
 }
 
 function farKiteArt() {

@@ -29,6 +29,20 @@ const gapRange = m => {
   return [lerp(GAP.min[0], GAP.min[1], k), lerp(GAP.max[0], GAP.max[1], k)];
 };
 
+/** Apex of a normal bounce (px). */
+const jumpHeight = (v = PHYS.bounce) => (v * v) / (2 * PHYS.gravity);
+
+/** Sideways distance (px) the hero can cover between leaving a ledge and coming down to one `gap` px higher, at full sideways speed. */
+function jumpReach(gap, v = PHYS.bounce) {
+  const disc = v * v - 2 * PHYS.gravity * gap;
+  if (disc < 0) return 0;
+  const t = (v + Math.sqrt(disc)) / PHYS.gravity, vm = PHYS.maxVx;
+  return Math.max(0, vm * t - (vm * vm) / (2 * PHYS.accel));
+}
+
+/** Largest centre-to-centre distance a ledge of width w may sit from the one below it, with the safety margin. */
+const maxStepX = (gap, w) => jumpReach(gap) * REACH.margin + w / 2;
+
 function makePlatform(type, x, y, rnd = Math.random) {
   const def = PLATFORMS[type];
   const p = { type, x, y, w: def.w, kind: def.kind, state: 'ok', t: 0, vx: 0, press: 0 };
@@ -78,10 +92,14 @@ function genUntil(s, topY) {
   while (s.genTop > topY) {
     const m = metersAt(s.genTop);
     const [lo, hi] = gapRange(m);
-    const gap = rr(s, lo, hi);
+    const gap = Math.min(rr(s, lo, hi), jumpHeight() * REACH.maxGapShare);
     const type = pickPlatformType(s, m);
     const def = PLATFORMS[type];
-    const x = clamp(wrapX(s.lastX + rr(s, -190, 190)), def.w / 2 + 4, W - def.w / 2 - 4);
+    let x = clamp(wrapX(s.lastX + rr(s, -190, 190)), def.w / 2 + 4, W - def.w / 2 - 4);
+    const step = dxWrap(x, s.lastX), reach = maxStepX(gap, def.w);
+    const xLo = def.w / 2 + 4, xHi = W - def.w / 2 - 4;
+    if (Math.abs(step) > reach) x = clamp(wrapX(s.lastX + Math.sign(step) * reach), xLo, xHi);
+    if (Math.abs(dxWrap(x, s.lastX)) > reach) x = clamp(s.lastX - Math.sign(step) * reach * 0.5, xLo, xHi);
     const p = makePlatform(type, x, s.genTop - gap, s.rnd);
     s.plats.push(p);
     s.genTop = p.y;

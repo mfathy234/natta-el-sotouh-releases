@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>نطّة السطوح · Natta El Sotouh</title>
 <meta name="description" content="Bounce up a Cairo apartment building to the rooftops and into the sky with Mar3y.">
-<meta name="theme-color" content="#f2b531">
+<meta name="theme-color" content="#e85d75">
 <meta property="og:title" content="نطّة السطوح · Natta El Sotouh">
 <meta property="og:description" content="Bounce up the balconies to the rooftops with Mar3y.">
 <meta property="og:image" content="og.png">
@@ -41,6 +41,10 @@
         <p class="latin">NATTA EL SOTOUH</p>
       </div>
       <p class="tag" data-t="tagline"></p>
+      <div class="row modes" role="group">
+        <button class="btn mode" type="button" id="btnModeFree" data-t="mode_free"></button>
+        <button class="btn mode" type="button" id="btnModeTower" data-t="mode_tower"></button>
+      </div>
       <button class="btn big" type="button" id="btnPlay" data-t="play"></button>
       <div class="row">
         <button class="btn" type="button" id="btnDaily"><span data-t="daily"></span><i class="dot hidden" id="dailyDot"></i></button>
@@ -50,7 +54,10 @@
         <button class="btn ghost" type="button" id="btnControls"><span data-t="controls"></span>: <span id="controlsState"></span></button>
         <button class="btn ghost" type="button" id="btnLang" data-t="langBtn"></button>
       </div>
-      <p class="status"><span data-t="best"></span>: <b id="menuBest">٠</b> <span data-t="m"></span> · <span data-t="coins"></span>: <b id="menuCoins">٠</b></p>
+      <button class="btn pass-try" type="button" id="btnPass" data-t="passTry"></button>
+      <p class="pass-chip hidden" id="passChipMenu"></p>
+      <p class="status hidden" id="menuTowerLine"></p>
+      <p class="status" id="menuFreeLine"><span data-t="best"></span>: <b id="menuBest">٠</b> <span data-t="m"></span> · <span data-t="coins"></span>: <b id="menuCoins">٠</b></p>
       <p class="hint" id="menuHint"></p>
     </div>
   </section>
@@ -58,6 +65,7 @@
   <section class="screen" id="hangar" aria-label="Heroes">
     <div class="bar"><button class="btn small" type="button" id="hangarBack" data-t="back"></button><div class="stat coin static"><img data-sprite="item:coin:0" alt=""><b id="hangarCoins">٠</b></div></div>
     <h2 class="h2" data-t="shop"></h2>
+    <p class="pass-chip hidden" id="passChipShop"></p>
     <div class="tabs" id="shopTabs">
       <button type="button" data-tab="heroes" data-t="heroes"></button>
       <button type="button" data-tab="look" data-t="tabLook"></button>
@@ -112,7 +120,7 @@
       <button class="btn ghost" type="button" id="confirmNo" data-t="cancel"></button>
     </div>
   </section>
-  <div id="runHint" class="hidden" aria-live="polite"><div class="hand-track"><svg class="hand" viewBox="0 0 40 48" aria-hidden="true"><path d="M14 22V8a4 4 0 0 1 8 0v12l12 3c3 .8 4 2.500 3.500 6l-2 12c-.5 3-2.500 5-5.500 5H18c-3 0-5-1.500-6.500-4L5 29c-1-2 1-4 3.500-3z" fill="#fffaf0" stroke="#1d1612" stroke-width="3" stroke-linejoin="round"/></svg></div><b id="runHintText"></b></div>
+  <div id="runHint" class="hidden" aria-live="polite"><div class="hand-track"><svg class="hand" viewBox="0 0 40 48" aria-hidden="true"><path d="M14 22V8a4 4 0 0 1 8 0v12l12 3c3 .8 4 2.500 3.500 6l-2 12c-.5 3-2.500 5-5.500 5H18c-3 0-5-1.500-6.500-4L5 29c-1-2 1-4 3.500-3z" fill="#fff4ec" stroke="#2a1f3d" stroke-width="3" stroke-linejoin="round"/></svg></div><b id="runHintText"></b></div>
   <p id="toast" role="status"></p>
 </div>
 <script src="art/core.js"></script>
@@ -142,7 +150,10 @@
 <script src="src/gen.js"></script>
 <script src="src/play.js"></script>
 <script src="src/looks.js"></script>
+<script src="src/towergen.js"></script>
+<script src="src/tower.js"></script>
 <script src="src/render.js"></script>
+<script src="src/towerview.js"></script>
 <script src="src/ui.js"></script>
 <script src="src/shopui.js"></script>
 <script src="src/main.js"></script>
