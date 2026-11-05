@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>نطّة السطوح · Natta El Sotouh</title>
+<meta name="description" content="Bounce up a Cairo apartment building to the rooftops and into the sky with Mar3y.">
+<meta name="theme-color" content="#f2b531">
+<meta property="og:title" content="نطّة السطوح · Natta El Sotouh">
+<meta property="og:description" content="Bounce up the balconies to the rooftops with Mar3y.">
+<meta property="og:image" content="og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="game" dir="rtl">
+  <canvas id="cv" aria-label="Game screen"></canvas>
+
+  <div id="hud" class="hidden">
+    <div class="stat"><b id="vHeight">٠</b><small id="uHeight">م</small></div>
+    <div class="stat coin"><img data-sprite="item:coin:0" alt=""><b id="vCoins">٠</b></div>
+  </div>
+  <button class="round" id="pauseBtn" type="button"><img data-sprite="item:pause:0" alt=""></button>
+  <button class="round" id="muteBtn" type="button"><img id="muteImg" data-sprite="item:soundOn:0" alt=""></button>
+  <div id="pop" aria-live="polite"></div>
+
+  <section class="screen show" id="splash" aria-label="Loading">
+    <img class="splash-hero" data-sprite="hero:marei:slouch" alt="">
+    <p class="splash-text" data-t="title">نطّة السطوح</p>
+  </section>
+
+  <section class="screen" id="menu" aria-label="Main menu">
+    <div class="menu-col">
+      <div class="logo">
+        <img class="logo-hero" id="menuHero" alt="Mar3y">
+        <h1 class="title" data-t="title">نطّة السطوح</h1>
+        <p class="latin">NATTA EL SOTOUH</p>
+      </div>
+      <p class="tag" data-t="tagline"></p>
+      <button class="btn big" type="button" id="btnPlay" data-t="play"></button>
+      <button class="btn" type="button" id="btnHeroes" data-t="heroes"></button>
+      <div class="row">
+        <button class="btn ghost" type="button" id="btnTilt"><span data-t="tilt"></span>: <span id="tiltState"></span></button>
+        <button class="btn ghost" type="button" id="btnLang" data-t="langBtn"></button>
+      </div>
+      <p class="status"><span data-t="best"></span>: <b id="menuBest">٠</b> <span data-t="m"></span> · <span data-t="coins"></span>: <b id="menuCoins">٠</b></p>
+      <p class="hint" data-t="hint"></p>
+    </div>
+  </section>
+
+  <section class="screen" id="hangar" aria-label="Heroes">
+    <div class="bar"><button class="btn small" type="button" id="hangarBack" data-t="back"></button><div class="stat coin static"><img data-sprite="item:coin:0" alt=""><b id="hangarCoins">٠</b></div></div>
+    <h2 class="h2" data-t="heroes"></h2>
+    <div class="cards" id="heroList"></div>
+  </section>
+
+  <section class="screen dim" id="pause" aria-label="Paused">
+    <div class="panel">
+      <h2 class="h2" data-t="paused"></h2>
+      <button class="btn big" type="button" id="btnResume" data-t="resume"></button>
+      <button class="btn ghost" type="button" id="btnQuit" data-t="menu"></button>
+    </div>
+  </section>
+
+  <section class="screen dim" id="over" aria-label="Game over">
+    <div class="panel">
+      <img class="over-hero" id="overHero" alt="">
+      <h2 class="h2" id="overTitle"></h2>
+      <p class="badge" id="overBest" data-t="newBest"></p>
+      <div class="results">
+        <div><small data-t="height"></small><b id="overHeight">٠</b></div>
+        <div><small data-t="earned"></small><b id="overCoins">٠</b></div>
+      </div>
+      <p class="status" id="overBestLine"></p>
+      <button class="btn big" type="button" id="btnRetry" data-t="retry"></button>
+      <div class="row">
+        <button class="btn ghost" type="button" id="btnOverHeroes" data-t="heroes"></button>
+        <button class="btn ghost" type="button" id="btnOverMenu" data-t="menu"></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen dim" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="panel">
+      <h2 class="h2" id="confirmTitle"></h2>
+      <p class="status" id="confirmBody"></p>
+      <button class="btn big" type="button" id="confirmYes"></button>
+      <button class="btn ghost" type="button" id="confirmNo" data-t="cancel"></button>
+    </div>
+  </section>
+  <p id="toast" role="status"></p>
+</div>
+<script src="art/core.js"></script>
+<script src="src/data.js"></script>
+<script src="art/heroes.js"></script>
+<script src="art/shams.js"></script>
+<script src="art/platforms.js"></script>
+<script src="art/enemies.js"></script>
+<script src="art/items.js"></script>
+<script src="art/world.js"></script>
+<script src="art/sprites.js"></script>
+<script src="src/save.js"></script>
+<script src="src/strings.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/engine.js"></script>
+<script src="src/gen.js"></script>
+<script src="src/play.js"></script>
+<script src="src/render.js"></script>
+<script src="src/ui.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>

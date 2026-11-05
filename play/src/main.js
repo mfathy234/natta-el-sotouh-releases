@@ -1,0 +1,49 @@
+/* Boot and main loop. Debug: add ?h=120 to the URL to start a run at 120 m (to look at the rooftops and the sky). */
+
+function hudUpdate(s) {
+  const h = nf(s.meters), c = nf(s.coinsGot);
+  if ($('vHeight').textContent !== h) $('vHeight').textContent = h;
+  if ($('vCoins').textContent !== c) $('vCoins').textContent = c;
+}
+
+let lastTime = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - lastTime) / 1000);
+  lastTime = now;
+  Eng.clock += dt;
+  beginFrame();
+  if (UI.state === 'play' && UI.run) {
+    updateRun(UI.run, dt);
+    renderRun(UI.run);
+    hudUpdate(UI.run);
+    if (UI.run.ended) finishRun();
+  } else if ((UI.state === 'pause' || UI.state === 'over') && UI.run) {
+    renderRun(UI.run);
+  } else if (UI.demo) {
+    updateRun(UI.demo, dt);
+    renderRun(UI.demo);
+  }
+  requestAnimationFrame(frame);
+}
+
+async function boot() {
+  const started = performance.now();
+  UI.save = loadSave(window.localStorage);
+  UI.debugMeters = Math.max(0, Math.min(5000, Number(new URLSearchParams(location.search).get('h')) || 0));
+  initEngine();
+  initInput(() => UI.state === 'play');
+  await loadSprites();
+  document.querySelectorAll('[data-sprite]').forEach(img => { img.src = spriteSrc(img.dataset.sprite); });
+  $('menuHero').src = spriteSrc('hero:marei:slouch');
+  initUi();
+  applyMute();
+  if (UI.save.tilt && !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) Input.tiltOn = true;
+  applyLang();
+  try { await Promise.race([Promise.all([document.fonts.load('40px Lalezar', 'نطة'), document.fonts.load('700 16px Cairo', 'Aa ي')]), new Promise(r => setTimeout(r, 1500))]); } catch (e) { /* fonts are optional */ }
+  const wait = Math.max(0, 900 - (performance.now() - started));
+  setTimeout(() => { goMenu(); }, wait);
+  requestAnimationFrame(frame);
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => null);
+}
+
+boot();
