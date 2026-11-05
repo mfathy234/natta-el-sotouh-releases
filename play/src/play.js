@@ -65,12 +65,12 @@ function playerHit(s, e) {
 }
 
 function updatePlayer(s, dt) {
-  const p = s.p, ax = s.demo ? 0 : Input.axis();
+  const p = s.p, ax = s.demo ? 0 : Input.axis(p, dt);
   if (!p.dead) {
-    const target = ax * PHYS.maxVx;
-    if (ax !== 0) p.vx += clamp(target - p.vx, -PHYS.accel * dt, PHYS.accel * dt);
+    const target = ax * PHYS.maxVx, turning = ax !== 0 && Math.sign(ax) !== Math.sign(p.vx) && p.vx !== 0;
+    if (ax !== 0) { const a = PHYS.accel * (turning ? PHYS.turnBoost : 1) * dt; p.vx += clamp(target - p.vx, -a, a); }
     else p.vx -= clamp(p.vx, -PHYS.drag * dt, PHYS.drag * dt);
-    if (ax !== 0) p.face = Math.sign(ax);
+    if (Math.abs(ax) > CONTROLS.face) p.face = Math.sign(ax);
   }
   if (p.kite > 0 && !p.dead) { p.kite -= dt; p.vy = -PHYS.kiteSpeed; if (p.kite <= 0) { p.vy = -PHYS.bounce * 0.6; p.inv = 0.6; } }
   else p.vy += PHYS.gravity * dt;

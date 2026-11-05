@@ -1,4 +1,4 @@
-/* UI: screens, language, hangar, confirm dialog, mute, tilt. Everything is plain DOM over the canvas. */
+/* UI: screens, language, hangar, confirm dialog, mute, controls. Everything is plain DOM over the canvas. */
 
 const $ = id => document.getElementById(id);
 const UI = { save: null, state: 'splash', run: null, demo: null, confirmYes: null, debugMeters: 0 };
@@ -34,12 +34,20 @@ function refreshText() {
   $('menuBest').textContent = nf(UI.save.best);
   $('menuCoins').textContent = nf(UI.save.coins);
   $('hangarCoins').textContent = nf(UI.save.coins);
-  $('tiltState').textContent = t(UI.save.tilt ? 'on' : 'off');
+  $('controlsState').textContent = t('ctrl_' + UI.save.controls);
+  $('menuHint').textContent = t(hintKey());
   $('muteImg').src = spriteSrc(UI.save.muted ? 'item:soundOff:0' : 'item:soundOn:0');
   $('muteBtn').setAttribute('aria-label', t('mute'));
   $('pauseBtn').setAttribute('aria-label', t('pause'));
   $('uHeight').textContent = t('m');
   if ($('hangar').classList.contains('show')) renderHangar();
+}
+
+const coarsePointer = () => Boolean(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+const availableModes = () => CONTROL_MODES.filter(m => m !== 'mouse' || !coarsePointer());
+function hintKey() {
+  if (!coarsePointer() && UI.save.controls === 'drag') return 'hint_keys';
+  return 'hint_' + UI.save.controls;
 }
 
 function applyLang() {
@@ -69,7 +77,11 @@ function startGame() {
   UI.run = newRun({ hero: UI.save.hero, startMeters: UI.debugMeters });
   UI.demo = null;
   UI.state = 'play';
-  Input.touch.clear();
+  Input.reset();
+  Input.calibrate();
+  if (UI.save.controls === 'tilt' && !Input.tiltOn) enableTilt().then(ok => { if (!ok) toast(t('tiltDenied')); });
+  UI.moved = 0;
+  showRunHint(!UI.save.hintSeen);
   showScreen(null);
   $('vHeight').textContent = nf(UI.run.meters);
   $('vCoins').textContent = nf(0);
@@ -78,10 +90,26 @@ function startGame() {
 function pauseGame() {
   if (UI.state !== 'play') return;
   UI.state = 'pause';
-  Input.touch.clear();
+  Input.reset();
   showScreen('pause');
 }
-function resumeGame() { if (UI.state === 'pause') { UI.state = 'play'; showScreen(null); } }
+function resumeGame() { if (UI.state === 'pause') { UI.state = 'play'; Input.calibrate(); showScreen(null); } }
+
+function showRunHint(on) {
+  const el = $('runHint');
+  if (on) {
+    $('runHintText').textContent = t(hintKey());
+    el.classList.toggle('keys', hintKey() !== 'hint_drag');
+  }
+  el.classList.toggle('hidden', !on);
+}
+
+/** Hide the first-run hint once the hero has really moved sideways. */
+function trackHint(s, dt) {
+  if (UI.save.hintSeen || $('runHint').classList.contains('hidden')) return;
+  UI.moved += Math.abs(s.p.vx) * dt;
+  if (UI.moved > CONTROLS.hintMoves) { showRunHint(false); setSave(setSetting(UI.save, 'hintSeen', true)); }
+}
 
 function finishRun() {
   const s = UI.run, meters = s.meters, total = score(s), prevBest = UI.save.best;
@@ -168,17 +196,19 @@ function toggleMute() {
   refreshText();
 }
 
-async function toggleTilt() {
-  if (UI.save.tilt) { Input.tiltOn = false; setSave(setSetting(UI.save, 'tilt', false)); }
-  else if (await enableTilt()) setSave(setSetting(UI.save, 'tilt', true));
-  else toast(t('tiltDenied'));
+async function cycleControls() {
+  const modes = availableModes();
+  const next = modes[(modes.indexOf(UI.save.controls) + 1) % modes.length];
+  if (next === 'tilt' && !(await enableTilt())) { toast(t('tiltDenied')); return; }
+  setSave(setSetting(UI.save, 'controls', next));
+  Input.setMode(next);
   refreshText();
 }
 
 function initUi() {
   $('btnPlay').onclick = startGame;
   $('btnHeroes').onclick = () => { Sound.start(); Sound.play('click'); openHangar('menu'); };
-  $('btnTilt').onclick = () => { Sound.start(); toggleTilt(); };
+  $('btnControls').onclick = () => { Sound.start(); Sound.play('click'); cycleControls(); };
   $('btnLang').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'lang', UI.save.lang === 'ar' ? 'en' : 'ar')); applyLang(); };
   $('muteBtn').onclick = () => { Sound.start(); toggleMute(); };
   $('pauseBtn').onclick = pauseGame;

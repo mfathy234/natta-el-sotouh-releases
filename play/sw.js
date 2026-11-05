@@ -1,9 +1,9 @@
 /* Offline cache. Bump CACHE when any file changes. All URLs are relative so it works under any subpath such as /play/. */
-const CACHE = 'natta-v1';
+const CACHE = 'natta-v2';
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest', 'og.png',
   'art/core.js', 'art/heroes.js', 'art/shams.js', 'art/platforms.js', 'art/enemies.js', 'art/items.js', 'art/world.js', 'art/sprites.js',
-  'src/data.js', 'src/save.js', 'src/strings.js', 'src/audio.js', 'src/engine.js', 'src/gen.js', 'src/play.js', 'src/render.js', 'src/ui.js', 'src/main.js',
+  'src/data.js', 'src/save.js', 'src/strings.js', 'src/audio.js', 'src/engine.js', 'src/input.js', 'src/gen.js', 'src/play.js', 'src/render.js', 'src/ui.js', 'src/main.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-48.png',
   'fonts/lalezar-arabic-400-normal.woff2', 'fonts/lalezar-latin-400-normal.woff2', 'fonts/cairo-arabic-400-normal.woff2',
   'fonts/cairo-arabic-700-normal.woff2', 'fonts/cairo-latin-400-normal.woff2', 'fonts/cairo-latin-700-normal.woff2'

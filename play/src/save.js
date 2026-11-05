@@ -8,7 +8,7 @@ const heroIds = () => HEROES.map(h => h.id);
 const heroById = id => HEROES.find(h => h.id === id) || null;
 
 function newSave(now = 0) {
-  return { v: SAVE_VERSION, createdAt: now, updatedAt: now, hero: DEFAULT_HERO, owned: [...FREE_HEROES], best: 0, coins: 0, runs: 0, lang: 'ar', muted: false, tilt: false };
+  return { v: SAVE_VERSION, createdAt: now, updatedAt: now, hero: DEFAULT_HERO, owned: [...FREE_HEROES], best: 0, coins: 0, runs: 0, lang: 'ar', muted: false, controls: DEFAULT_CONTROLS, hintSeen: false };
 }
 
 /** Validate anything read from storage. Returns a clean save, or null when it is not a save. */
@@ -17,6 +17,7 @@ function sanitizeSave(raw) {
   if (!('best' in raw) && !('coins' in raw) && !('owned' in raw) && !('hero' in raw)) return null;
   const known = heroIds();
   const owned = [...new Set([...FREE_HEROES, ...(Array.isArray(raw.owned) ? raw.owned : [])])].filter(id => known.includes(id));
+  const controls = CONTROL_MODES.includes(raw.controls) ? raw.controls : raw.tilt === true ? 'tilt' : DEFAULT_CONTROLS;
   return {
     v: SAVE_VERSION,
     createdAt: toInt(raw.createdAt, 0, 9e15),
@@ -28,7 +29,8 @@ function sanitizeSave(raw) {
     runs: toInt(raw.runs, 0, 1e9),
     lang: raw.lang === 'en' ? 'en' : 'ar',
     muted: raw.muted === true,
-    tilt: raw.tilt === true
+    controls,
+    hintSeen: raw.hintSeen === true
   };
 }
 

@@ -6,8 +6,21 @@ const COIN_SCORE = 5;
 
 const PHYS = {
   gravity: 1500, bounce: 760, spring: 1180, shoes: 1020, shoesBounces: 4,
-  stomp: 640, kiteSpeed: 660, kiteTime: 2.4, maxVx: 250, accel: 2400, drag: 1800,
+  stomp: 640, kiteSpeed: 660, kiteTime: 2.4, maxVx: 250, accel: 3200, drag: 2800, turnBoost: 1.6,
   halfH: 26, radius: 19, feetSlack: 6, camLine: 250, hurtHop: 420, invuln: 1.1
+};
+
+/* Controls. Modes: drag (relative finger drag, default), tilt, buttons (left/right halves), mouse (desktop follow). Keys always work.
+   drag: gain = world px per finger px, follow = 1/s pull toward the target, leash = max px the target may run ahead of the hero.
+   tilt: range = degrees from neutral for full speed, dead = degrees ignored, curve > 1 softens small tilts, smooth = 1/s low-pass. */
+const CONTROL_MODES = ['drag', 'tilt', 'buttons', 'mouse'];
+const DEFAULT_CONTROLS = 'drag';
+const CONTROLS = {
+  drag: { gain: 1.25, follow: 14, leash: 90, still: 2 },
+  tilt: { range: 16, dead: 2.5, curve: 1.25, smooth: 14, calibrateAfter: 0.25 },
+  mouse: { follow: 12, dead: 6 },
+  face: 0.12,
+  hintMoves: 70
 };
 
 const PLATFORMS = {
@@ -97,6 +110,6 @@ const SAVE_KEY = 'natta.save.v1';
 
 const NATTA_DATA = {
   W, H, METER, COIN_SCORE, PHYS, PLATFORMS, WEIGHT_STOPS, GAP, MAX_UNSAFE_RUN, COIN, POWERUPS, ENEMIES,
-  HEROES, DEFAULT_HERO, MILESTONES, FALL_LINES, SKY, FACADE, SAVE_KEY
+  HEROES, DEFAULT_HERO, CONTROL_MODES, DEFAULT_CONTROLS, CONTROLS, MILESTONES, FALL_LINES, SKY, FACADE, SAVE_KEY
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = NATTA_DATA;

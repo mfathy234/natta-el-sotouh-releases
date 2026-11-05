@@ -14,6 +14,7 @@ function frame(now) {
   beginFrame();
   if (UI.state === 'play' && UI.run) {
     updateRun(UI.run, dt);
+    trackHint(UI.run, dt);
     renderRun(UI.run);
     hudUpdate(UI.run);
     if (UI.run.ended) finishRun();
@@ -37,7 +38,8 @@ async function boot() {
   $('menuHero').src = spriteSrc('hero:marei:slouch');
   initUi();
   applyMute();
-  if (UI.save.tilt && !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) Input.tiltOn = true;
+  Input.setMode(UI.save.controls);
+  if (UI.save.controls === 'tilt' && !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) Input.tiltOn = true;
   applyLang();
   try { await Promise.race([Promise.all([document.fonts.load('40px Lalezar', 'نطة'), document.fonts.load('700 16px Cairo', 'Aa ي')]), new Promise(r => setTimeout(r, 1500))]); } catch (e) { /* fonts are optional */ }
   const wait = Math.max(0, 900 - (performance.now() - started));

@@ -140,7 +140,7 @@ function renderHero(s) {
   if (p.inv > 0 && Math.floor(Eng.clock * 12) % 2 && !p.dead) return;
   const k = clamp(p.landT / 0.34, 0, 1) * (p.vy < 0 ? 1 : 0), launch = clamp(-p.vy / 4200, 0, 0.16);
   const sq = k > 0.55 ? (k - 0.55) / 0.45 : 0;
-  const sx = (1 + 0.2 * sq - launch * 0.6) * (p.face < 0 ? -1 : 1), syy = 1 - 0.24 * sq + launch;
+  const sx = (1 + 0.2 * sq - launch * 0.6) * (p.face > 0 ? -1 : 1), syy = 1 - 0.24 * sq + launch;
   const draw = x => {
     if (p.kite > 0) drawSpr('item:kite:0', x, sy - 74, { rot: Math.sin(Eng.clock * 6) * 0.12, sx: 1.3, sy: 1.3 });
     if (p.kite > 0) { ctx.save(); ctx.strokeStyle = K.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, sy - 52); ctx.lineTo(x, sy - 30); ctx.stroke(); ctx.restore(); }

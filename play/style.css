@@ -88,3 +88,12 @@ img { -webkit-user-drag: none; }
 
 [dir=ltr] .title { letter-spacing: .02em; }
 @media (prefers-reduced-motion: reduce) { .splash-hero, .logo-hero { animation: none; } #pop.go { animation-duration: 1s; } }
+
+#runHint { position: absolute; left: 0; right: 0; bottom: 22%; z-index: 24; display: flex; flex-direction: column; align-items: center; gap: .5em; pointer-events: none; font-family: Lalezar, Cairo; font-size: 1.25em; color: var(--gold); -webkit-text-stroke: .1em var(--ink); paint-order: stroke fill; transition: opacity .35s; }
+#runHint.hidden { opacity: 0; }
+#runHint .hand-track { width: 62%; height: 4em; position: relative; direction: ltr; }
+#runHint .hand { position: absolute; top: 0; left: 0; width: 2.8em; animation: handSwipe 1.8s ease-in-out infinite; filter: drop-shadow(0 .1em 0 rgba(29,22,18,.35)); }
+@keyframes handSwipe { 0% { transform: translateX(0) rotate(-8deg); } 50% { transform: translateX(calc(var(--track, 10em) - 2.8em)) rotate(8deg); } 100% { transform: translateX(0) rotate(-8deg); } }
+#runHint .hand-track { --track: 11em; }
+#runHint.keys .hand-track { display: none; }
+@media (prefers-reduced-motion: reduce) { #runHint .hand { animation-duration: 3.6s; } }
