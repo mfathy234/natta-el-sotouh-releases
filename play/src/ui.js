@@ -122,6 +122,7 @@ function goMenu() {
   showScreen('menu');
   refreshText();
   moodEnter();
+  NattaUpdate.onMenu();
 }
 
 function startGame(daily = false) {

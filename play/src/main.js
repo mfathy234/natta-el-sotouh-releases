@@ -49,7 +49,7 @@ async function boot() {
   const wait = Math.max(0, 900 - (performance.now() - started));
   setTimeout(() => { goMenu(); }, wait);
   requestAnimationFrame(frame);
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => null);
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') NattaUpdate.init();
 }
 
 boot();

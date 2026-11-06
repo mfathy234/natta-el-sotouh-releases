@@ -80,6 +80,7 @@ const STR = {
   levelOf: ['المستوى {0} من {1}', 'Level {0} of {1}'],
   maxed: ['كامل', 'Max'],
   passTry: ['تجربة كل حاجة ببلاش · يومين', 'Try everything free · 2 days'],
+  updateChip: ['نسخة جديدة — هتتحدث لما ترجع للقائمة', 'New version — updates when you return to the menu'],
   passOn: ['اتفتح لك كل حاجة لمدة يومين!', 'Everything is unlocked for 2 days!'],
   passEnded: ['خلصت التجربة. اللي اشتريته معاك', 'Trial over. What you bought stays'],
   passFree: ['ببلاش', 'Free'],

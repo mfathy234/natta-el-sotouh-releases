@@ -21,3 +21,13 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+# natta-play-begin
+/play/
+  Cache-Control: no-cache
+/play/index.html
+  Cache-Control: no-cache
+/play/sw.js
+  Cache-Control: no-cache
+/play/version.json
+  Cache-Control: no-store
+# natta-play-end

@@ -61,7 +61,7 @@ const Sound = {
     if (this.bufs[file]) return Promise.resolve(this.bufs[file]);
     if (this.loading[file]) return this.loading[file];
     const c = this.ctx;
-    this.loading[file] = fetch(this.DIR + file + '.' + this.ext).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    this.loading[file] = fetch(this.DIR + file + '.' + this.ext + (typeof NATTA_BUILD === 'string' ? '?v=' + NATTA_BUILD : '')).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
       .then(ab => new Promise((ok, no) => { const p = c.decodeAudioData(ab, ok, no); if (p && p.catch) p.catch(no); }))
       .then(b => { this.bufs[file] = b; return b; })
       .catch(() => { if (!this.failed.includes(file)) this.failed.push(file); return null; });
