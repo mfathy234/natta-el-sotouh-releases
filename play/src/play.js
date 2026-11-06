@@ -36,7 +36,7 @@ function launch(s, power, sound) {
   const p = s.p;
   p.vy = -power;
   p.landT = 0.34;
-  if (power >= PHYS.shoes) { p.popT = FEEL.popTime; s.slowT = FEEL.slowTime; }
+  if (power >= PHYS.shoes && !(typeof Calm !== 'undefined' && Calm.on())) { p.popT = FEEL.popTime; s.slowT = FEEL.slowTime; }
   p.hopT = 0.2;
   Sound.play(sound);
 }

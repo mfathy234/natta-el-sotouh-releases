@@ -80,14 +80,11 @@ function refreshGameplayUi() {
   btn.classList.toggle('hidden', !tower);
   const v = weeklyView(UI.save, isoWeekKey());
   btn.textContent = t('weeklyBtn') + (v.best ? ' · ' + timeText(v.best) : '');
-  const g = $('btnGhost');
-  if (g) g.textContent = t('ghostBtn') + ': ' + t(UI.save.ghost === false ? 'off' : 'on');
 }
 
 function initGameplayUi() {
-  const w = $('btnWeekly'), g = $('btnGhost');
+  const w = $('btnWeekly');
   if (w) w.onclick = () => { Sound.start(); Sound.play('click'); startGame('weekly'); };
-  if (g) g.onclick = () => { Sound.play('click'); setSave(setSetting(UI.save, 'ghost', UI.save.ghost === false)); refreshGameplayUi(); };
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = { isoWeekKey, weeklySeed, weeklyView, recordWeekly };

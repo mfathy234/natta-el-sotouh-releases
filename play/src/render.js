@@ -141,7 +141,7 @@ function renderHero(s) {
   const p = s.p, sy = p.y - s.cam + PHYS.halfH + 1, ctx = Eng.ctx;
   if (p.inv > 0 && Math.floor(Eng.clock * 12) % 2 && !p.dead) return;
   const k = clamp(p.landT / 0.34, 0, 1) * (p.vy < 0 ? 1 : 0), launch = clamp(-p.vy / 4200, 0, 0.16);
-  const sq = k > 0.55 ? (k - 0.55) / 0.45 : 0;
+  const sq = k > 0.55 && !Calm.on() ? (k - 0.55) / 0.45 : 0;
   const pk = clamp((p.popT || 0) / FEEL.popTime, 0, 1);
   const sx = (1 + FEEL.landX * sq - launch * 0.6 - FEEL.popX * pk) * (p.face > 0 ? -1 : 1), syy = 1 - FEEL.landY * sq + launch + FEEL.popY * pk;
   const draw = x => {

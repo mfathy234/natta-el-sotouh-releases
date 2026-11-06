@@ -2,6 +2,7 @@
    Shop (looks, upgrades) rules are in shop.js; the daily challenge and missions are in daily.js. */
 
 if (typeof module !== 'undefined' && module.exports && typeof sanitizeMeta === 'undefined') Object.assign(global, require('./meta.js'));
+if (typeof module !== 'undefined' && module.exports && typeof sanitizePrefs === 'undefined') Object.assign(global, require('./prefs.js'));
 
 const SAVE_VERSION = 2;
 const FREE_HEROES = ['marei'];
@@ -23,7 +24,7 @@ function newMissions() { return { date: '', prog: {}, done: [] }; }
 function newSave(now = 0) {
   return {
     v: SAVE_VERSION, createdAt: now, updatedAt: now, hero: DEFAULT_HERO, owned: [...FREE_HEROES], best: 0, coins: 0, runs: 0, lang: 'ar', muted: false, controls: DEFAULT_CONTROLS, hintSeen: false,
-    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions(), mode: 'free', tower: newTowerSave(), passUntil: 0, meta: newMeta(), ghost: true, weekly: newWeeklySave()
+    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions(), mode: 'free', tower: newTowerSave(), passUntil: 0, meta: newMeta(), ghost: true, weekly: newWeeklySave(), prefs: newPrefs()
   };
 }
 
@@ -95,7 +96,8 @@ function sanitizeSave(raw, now = Date.now()) {
     passUntil,
     meta: sanitizeMeta(raw.meta),
     ghost: raw.ghost !== false,
-    weekly: sanitizeWeeklySave(raw.weekly)
+    weekly: sanitizeWeeklySave(raw.weekly),
+    prefs: sanitizePrefs(raw.prefs)
   };
 }
 
@@ -152,6 +154,13 @@ function settlePass(save, now = passClock.now()) {
 const selectHero = (save, id) => (heroFlies(save, id) ? { ...save, hero: id } : save);
 const setSetting = (save, key, value) => sanitizeSave({ ...save, [key]: value }) || save;
 
+/** Wipe all progress (best, coins, heroes, looks, upgrades, daily, tower, weekly, trophies, album). Language, sound, controls and the other
+    settings stay, and the intro comic is not shown again. */
+function resetProgress(save, now = 0) {
+  const fresh = newSave(now);
+  return { ...fresh, lang: save.lang, muted: save.muted, controls: save.controls, ghost: save.ghost, prefs: save.prefs, hintSeen: save.hintSeen, mode: 'free', meta: { ...newMeta(), comicSeen: true } };
+}
+
 /* ---------- The Tower: best floor, last checkpoint (a multiple of TOWER.checkEvery), runs and rooftop wins ---------- */
 const newTowerSave = () => ({ best: 0, checkpoint: 0, runs: 0, wins: 0, hintSeen: false });
 
@@ -186,5 +195,5 @@ function persistSave(storage, save) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { newSave, sanitizeSave, recordRun, canBuyHero, buyHero, selectHero, setSetting, loadSave, persistSave, earnedHeroes, passActive, passRemaining, passSplit, startPass, heroFlies, settlePass, passClock, sanitizeTower, towerProgress, recordTower, sanitizeWeeklySave, newWeeklySave };
+  module.exports = { newSave, sanitizeSave, recordRun, canBuyHero, buyHero, selectHero, setSetting, resetProgress, loadSave, persistSave, earnedHeroes, passActive, passRemaining, passSplit, startPass, heroFlies, settlePass, passClock, sanitizeTower, towerProgress, recordTower, sanitizeWeeklySave, newWeeklySave };
 }

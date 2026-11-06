@@ -129,7 +129,30 @@ const STR = {
   weeklyWon: ['الوقت {0} · الأحسن {1}', 'Time {0} · best {1}'],
   weeklyLost: ['ما وصلتش · الأحسن {0}', 'Not yet · best {0}'],
   weeklyReward: ['+{0} عملة', '+{0} coins'],
-  ghostBtn: ['الشبح', 'Ghost']
+  ghostBtn: ['الشبح', 'Ghost'],
+  settings: ['الإعدادات', 'Settings'],
+  set_sound: ['الصوت', 'Sound'],
+  set_music: ['الموسيقى', 'Music'],
+  set_sfx: ['المؤثرات', 'Sound effects'],
+  set_voices: ['أصوات الشخصيات', 'Voices'],
+  set_vibrate: ['الاهتزاز', 'Vibration'],
+  set_noVibrate: ['مش شغّال على الجهاز ده', 'Not available on this device'],
+  set_play: ['اللعب', 'Gameplay'],
+  set_controls: ['التحكم', 'Controls'],
+  set_lang: ['اللغة', 'Language'],
+  set_ghost: ['شبح أحسن جولة', 'Best-run ghost'],
+  set_calm: ['تقليل الحركة', 'Reduce motion'],
+  set_story: ['الحكاية', 'Story'],
+  set_comic: ['شوف الحكاية تاني', 'Watch the story again'],
+  set_credits: ['عن اللعبة', 'Credits'],
+  set_creditsText: ['مرعي قطّ حقيقي، والرسم متاخد من شكله. الموسيقى متألفة بالكود (synth) من غير ما حد يعزفها، وأصوات الشخصيات متعملة بالذكاء الاصطناعي.', 'Mar3y is a real cat and the drawings are based on him. The music is synthesized in code, and the voices are made with AI.'],
+  set_reset: ['امسح كل التقدّم', 'Erase all progress'],
+  set_resetTitle: ['تمسح كل التقدّم؟', 'Erase all progress?'],
+  set_resetBody: ['هيتمسح: أحسن ارتفاع، العملات، الشخصيات والأشكال والتطويرات، التحدي اليومي، البرج، الإنجازات والألبوم. مفيش رجوع.', 'This deletes: best height, coins, heroes, looks and upgrades, the daily challenge, the Tower, trophies and the album. It cannot be undone.'],
+  set_resetBtn: ['امسح كل التقدّم', 'Erase all progress'],
+  set_resetDone: ['اتمسح كل حاجة. ابدأ من الأول!', 'Everything is erased. Fresh start!'],
+  set_fpsOn: ['عدّاد الإطارات شغّال', 'FPS counter on'],
+  set_fpsOff: ['عدّاد الإطارات اتقفل', 'FPS counter off']
 };
 
 const LANG = { cur: 'ar' };

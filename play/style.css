@@ -1,10 +1,10 @@
 /* Layout is in em: the stage sets font-size = 16 logical px * scale, so 1em is 16 px of the 360 x 640 stage. */
-@font-face { font-family: Lalezar; src: url(fonts/lalezar-arabic-400-normal.woff2?v=41d57e3e3bdb) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; font-display: swap; }
-@font-face { font-family: Lalezar; src: url(fonts/lalezar-latin-400-normal.woff2?v=41d57e3e3bdb) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-arabic-400-normal.woff2?v=41d57e3e3bdb) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-arabic-700-normal.woff2?v=41d57e3e3bdb) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-latin-400-normal.woff2?v=41d57e3e3bdb) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-latin-700-normal.woff2?v=41d57e3e3bdb) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
+@font-face { font-family: Lalezar; src: url(fonts/lalezar-arabic-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; font-display: swap; }
+@font-face { font-family: Lalezar; src: url(fonts/lalezar-latin-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-arabic-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-arabic-700-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-latin-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-latin-700-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
 
 :root { --ink: #2a1f3d; --paper: #fff4ec; --white: #fffaf6; --gold: #ffd23f; --goldDark: #c99700; --goldText: #7a5600; --coral: #e85d75; --coralDark: #b53a58; --red: #d63a2f; --mint: #2fbfa6; --mintDark: #1f8f7c; --mintText: #0d6b5a; --mintLight: #d4f4ec; --lemonLight: #fff0b8; --teal: #2fbfa6; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -242,3 +242,31 @@ html[lang=en] .title { font-size: 3em; white-space: nowrap; }
 .comic-btns { max-width: 21em; align-items: center; }
 .comic-btns .btn.big { font-size: 1.5em; flex: 2; }
 @media (max-height: 700px) { .comic-cap { font-size: .78em; padding: .3em .6em; } #comic { gap: .35em; } }
+
+/* Settings */
+#settings { background: rgba(255, 244, 236, .97); justify-content: flex-start; z-index: 41; }
+#settings .h2 { font-size: 1.7em; margin: -.2em 0 .15em; }
+#settings .bar { margin-bottom: .4em; }
+.set-body { flex: 1; gap: .45em; padding-bottom: 1em; }
+.set-h { flex: none; margin: .5em 0 0; font-family: Lalezar; font-weight: 400; font-size: 1.2em; color: var(--goldText); text-align: start; }
+.set-row { flex: none; display: flex; align-items: center; justify-content: space-between; gap: .6em; padding: .45em .7em; background: var(--white); border: .14em solid var(--ink); border-radius: 1em; }
+.set-lbl { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.set-lbl b { font-family: Lalezar, Cairo; font-weight: 400; font-size: 1.1em; }
+.set-lbl small { font-size: .7em; font-weight: 600; opacity: .8; }
+.set-slider { display: flex; align-items: center; gap: .5em; flex: 0 0 52%; }
+.set-slider output { min-width: 2.6em; text-align: end; font-family: Lalezar, Cairo; font-size: 1em; }
+.set-slider input { flex: 1; min-width: 0; height: 1.9em; accent-color: var(--coral); touch-action: pan-x; }
+.switch { flex: none; min-width: 4.2em; padding: .15em .7em; font-family: Lalezar, Cairo; font-size: 1.05em; color: var(--ink); background: var(--paper); border: .12em solid var(--ink); border-radius: 1em; cursor: pointer; }
+.switch.on { background: var(--mint); box-shadow: 0 .12em 0 var(--mintDark); }
+.switch:disabled { opacity: .45; cursor: default; }
+.seg { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .3em; flex: 0 1 62%; }
+.seg button { flex: 1 1 auto; padding: .15em .5em; font-family: Lalezar, Cairo; font-size: .95em; color: var(--ink); background: var(--paper); border: .12em solid var(--ink); border-radius: .9em; cursor: pointer; white-space: nowrap; }
+.seg button.on { background: var(--mint); box-shadow: 0 .1em 0 var(--mintDark); }
+#settings .btn { flex: none; }
+#settings .btn.ghost { font-size: 1.05em; }
+.btn.danger { background: var(--red); color: var(--white); font-size: 1.1em; box-shadow: 0 .14em 0 #8e241c; margin-top: .4em; }
+.set-credits { flex: none; margin: 0; padding: .5em .7em; background: var(--lemonLight); border: .12em solid var(--ink); border-radius: .8em; font-weight: 700; font-size: .85em; line-height: 1.45; }
+.set-version { flex: none; align-self: center; margin-top: .3em; padding: .3em .8em; background: none; border: 0; font-family: Cairo, sans-serif; font-weight: 700; font-size: .75em; opacity: .65; color: var(--ink); cursor: pointer; }
+.gear { width: 1.1em; height: 1.1em; vertical-align: -.15em; }
+#fps { position: absolute; bottom: .4em; inset-inline-start: .5em; margin: 0; padding: 0 .4em; background: rgba(42, 31, 61, .75); color: var(--white); border-radius: .5em; font: 700 .7em/1.6 Cairo, sans-serif; z-index: 90; pointer-events: none; direction: ltr; }
+#game.calm .splash-hero, #game.calm .logo-art, #game.calm .stage-hero, #game.calm .dot { animation: none; }

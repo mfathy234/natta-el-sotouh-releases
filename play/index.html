@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<script>window.NATTA_BUILD="41d57e3e3bdb";</script>
+<script>window.NATTA_BUILD="4b9b2753898f";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>نطّة السطوح · Natta El Sotouh</title>
@@ -9,12 +9,12 @@
 <meta name="theme-color" content="#e85d75">
 <meta property="og:title" content="نطّة السطوح · Natta El Sotouh">
 <meta property="og:description" content="Bounce up the balconies to the rooftops with Mar3y.">
-<meta property="og:image" content="og.png?v=41d57e3e3bdb">
+<meta property="og:image" content="og.png?v=4b9b2753898f">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="manifest" href="manifest.webmanifest?v=41d57e3e3bdb">
-<link rel="icon" href="icons/favicon-48.png?v=41d57e3e3bdb" sizes="48x48">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=41d57e3e3bdb">
-<link rel="stylesheet" href="style.css?v=41d57e3e3bdb">
+<link rel="manifest" href="manifest.webmanifest?v=4b9b2753898f">
+<link rel="icon" href="icons/favicon-48.png?v=4b9b2753898f" sizes="48x48">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=4b9b2753898f">
+<link rel="stylesheet" href="style.css?v=4b9b2753898f">
 </head>
 <body>
 <div id="game" dir="rtl">
@@ -53,10 +53,7 @@
         <button class="btn" type="button" id="btnDaily"><span data-t="daily"></span><i class="dot hidden" id="dailyDot"></i></button>
         <button class="btn" type="button" id="btnHeroes" data-t="shop"></button>
       </div>
-      <div class="row">
-        <button class="btn ghost" type="button" id="btnControls"><span data-t="controls"></span>: <span id="controlsState"></span></button>
-        <button class="btn ghost" type="button" id="btnLang" data-t="langBtn"></button>
-      </div>
+      <button class="btn ghost" type="button" id="btnSettings"><svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="7.2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="3.6 2.6"/></svg> <span data-t="settings"></span></button>
       <button class="btn pass-try" type="button" id="btnPass" data-t="passTry"></button>
       <p class="pass-chip hidden" id="passChipMenu"></p>
       <p class="status hidden" id="menuTowerLine"></p>
@@ -115,9 +112,15 @@
     <div class="panel">
       <h2 class="h2" data-t="paused"></h2>
       <button class="btn big" type="button" id="btnResume" data-t="resume"></button>
-      <button class="btn ghost" type="button" id="btnGhost"></button>
+      <button class="btn ghost" type="button" id="btnPauseSettings" data-t="settings"></button>
       <button class="btn ghost" type="button" id="btnQuit" data-t="menu"></button>
     </div>
+  </section>
+
+  <section class="screen" id="settings" aria-label="Settings">
+    <div class="bar"><button class="btn small" type="button" id="settingsBack" data-t="back"></button></div>
+    <h2 class="h2" data-t="settings"></h2>
+    <div class="cards set-body" id="settingsBody"></div>
   </section>
 
   <section class="screen dim" id="over" aria-label="Game over">
@@ -151,61 +154,64 @@
   </section>
   <div id="runHint" class="hidden" aria-live="polite"><div class="hand-track"><svg class="hand" viewBox="0 0 40 48" aria-hidden="true"><path d="M14 22V8a4 4 0 0 1 8 0v12l12 3c3 .8 4 2.500 3.500 6l-2 12c-.5 3-2.500 5-5.500 5H18c-3 0-5-1.500-6.500-4L5 29c-1-2 1-4 3.500-3z" fill="#fff4ec" stroke="#2a1f3d" stroke-width="3" stroke-linejoin="round"/></svg></div><b id="runHintText"></b></div>
   <div id="achToast" role="status" aria-live="polite"><img data-sprite="item:star:0" alt=""><div><small id="achToastHead"></small><b id="achToastName"></b><span id="achToastCap"></span></div></div>
+  <p id="fps" class="hidden" aria-hidden="true">0</p>
   <p id="toast" role="status"></p>
 </div>
-<script src="art/core.js?v=41d57e3e3bdb"></script>
-<script src="src/data.js?v=41d57e3e3bdb"></script>
-<script src="art/heroes.js?v=41d57e3e3bdb"></script>
-<script src="art/shams.js?v=41d57e3e3bdb"></script>
-<script src="art/crew.js?v=41d57e3e3bdb"></script>
-<script src="art/hanafy.js?v=41d57e3e3bdb"></script>
-<script src="art/batta.js?v=41d57e3e3bdb"></script>
-<script src="art/hadeel.js?v=41d57e3e3bdb"></script>
-<script src="art/shawish.js?v=41d57e3e3bdb"></script>
-<script src="art/looks.js?v=41d57e3e3bdb"></script>
-<script src="art/mood.js?v=41d57e3e3bdb"></script>
-<script src="art/comic.js?v=41d57e3e3bdb"></script>
-<script src="art/platforms.js?v=41d57e3e3bdb"></script>
-<script src="art/enemies.js?v=41d57e3e3bdb"></script>
-<script src="art/neighbours.js?v=41d57e3e3bdb"></script>
-<script src="art/events.js?v=41d57e3e3bdb"></script>
-<script src="art/bawab.js?v=41d57e3e3bdb"></script>
-<script src="art/items.js?v=41d57e3e3bdb"></script>
-<script src="art/world.js?v=41d57e3e3bdb"></script>
-<script src="art/sprites.js?v=41d57e3e3bdb"></script>
-<script src="src/meta.js?v=41d57e3e3bdb"></script>
-<script src="src/save.js?v=41d57e3e3bdb"></script>
-<script src="src/shop.js?v=41d57e3e3bdb"></script>
-<script src="src/daily.js?v=41d57e3e3bdb"></script>
-<script src="src/perks.js?v=41d57e3e3bdb"></script>
-<script src="src/twist.js?v=41d57e3e3bdb"></script>
-<script src="src/strings.js?v=41d57e3e3bdb"></script>
-<script src="src/audio.js?v=41d57e3e3bdb"></script>
-<script src="src/engine.js?v=41d57e3e3bdb"></script>
-<script src="src/input.js?v=41d57e3e3bdb"></script>
-<script src="src/tiers.js?v=41d57e3e3bdb"></script>
-<script src="src/banner.js?v=41d57e3e3bdb"></script>
-<script src="src/combo.js?v=41d57e3e3bdb"></script>
-<script src="src/gen.js?v=41d57e3e3bdb"></script>
-<script src="src/play.js?v=41d57e3e3bdb"></script>
-<script src="src/looks.js?v=41d57e3e3bdb"></script>
-<script src="src/neighbours.js?v=41d57e3e3bdb"></script>
-<script src="src/events.js?v=41d57e3e3bdb"></script>
-<script src="src/ghost.js?v=41d57e3e3bdb"></script>
-<script src="src/towergen.js?v=41d57e3e3bdb"></script>
-<script src="src/tower.js?v=41d57e3e3bdb"></script>
-<script src="src/bawab.js?v=41d57e3e3bdb"></script>
-<script src="src/weekly.js?v=41d57e3e3bdb"></script>
-<script src="src/render.js?v=41d57e3e3bdb"></script>
-<script src="src/towerview.js?v=41d57e3e3bdb"></script>
-<script src="src/ui.js?v=41d57e3e3bdb"></script>
-<script src="src/shopui.js?v=41d57e3e3bdb"></script>
-<script src="src/shopstage.js?v=41d57e3e3bdb"></script>
-<script src="src/share.js?v=41d57e3e3bdb"></script>
-<script src="src/comicui.js?v=41d57e3e3bdb"></script>
-<script src="src/albumui.js?v=41d57e3e3bdb"></script>
-<script src="src/moods.js?v=41d57e3e3bdb"></script>
-<script src="src/update.js?v=41d57e3e3bdb"></script>
-<script src="src/main.js?v=41d57e3e3bdb"></script>
+<script src="art/core.js?v=4b9b2753898f"></script>
+<script src="src/data.js?v=4b9b2753898f"></script>
+<script src="art/heroes.js?v=4b9b2753898f"></script>
+<script src="art/shams.js?v=4b9b2753898f"></script>
+<script src="art/crew.js?v=4b9b2753898f"></script>
+<script src="art/hanafy.js?v=4b9b2753898f"></script>
+<script src="art/batta.js?v=4b9b2753898f"></script>
+<script src="art/hadeel.js?v=4b9b2753898f"></script>
+<script src="art/shawish.js?v=4b9b2753898f"></script>
+<script src="art/looks.js?v=4b9b2753898f"></script>
+<script src="art/mood.js?v=4b9b2753898f"></script>
+<script src="art/comic.js?v=4b9b2753898f"></script>
+<script src="art/platforms.js?v=4b9b2753898f"></script>
+<script src="art/enemies.js?v=4b9b2753898f"></script>
+<script src="art/neighbours.js?v=4b9b2753898f"></script>
+<script src="art/events.js?v=4b9b2753898f"></script>
+<script src="art/bawab.js?v=4b9b2753898f"></script>
+<script src="art/items.js?v=4b9b2753898f"></script>
+<script src="art/world.js?v=4b9b2753898f"></script>
+<script src="art/sprites.js?v=4b9b2753898f"></script>
+<script src="src/meta.js?v=4b9b2753898f"></script>
+<script src="src/prefs.js?v=4b9b2753898f"></script>
+<script src="src/save.js?v=4b9b2753898f"></script>
+<script src="src/shop.js?v=4b9b2753898f"></script>
+<script src="src/daily.js?v=4b9b2753898f"></script>
+<script src="src/perks.js?v=4b9b2753898f"></script>
+<script src="src/twist.js?v=4b9b2753898f"></script>
+<script src="src/strings.js?v=4b9b2753898f"></script>
+<script src="src/audio.js?v=4b9b2753898f"></script>
+<script src="src/engine.js?v=4b9b2753898f"></script>
+<script src="src/input.js?v=4b9b2753898f"></script>
+<script src="src/tiers.js?v=4b9b2753898f"></script>
+<script src="src/banner.js?v=4b9b2753898f"></script>
+<script src="src/combo.js?v=4b9b2753898f"></script>
+<script src="src/gen.js?v=4b9b2753898f"></script>
+<script src="src/play.js?v=4b9b2753898f"></script>
+<script src="src/looks.js?v=4b9b2753898f"></script>
+<script src="src/neighbours.js?v=4b9b2753898f"></script>
+<script src="src/events.js?v=4b9b2753898f"></script>
+<script src="src/ghost.js?v=4b9b2753898f"></script>
+<script src="src/towergen.js?v=4b9b2753898f"></script>
+<script src="src/tower.js?v=4b9b2753898f"></script>
+<script src="src/bawab.js?v=4b9b2753898f"></script>
+<script src="src/weekly.js?v=4b9b2753898f"></script>
+<script src="src/render.js?v=4b9b2753898f"></script>
+<script src="src/towerview.js?v=4b9b2753898f"></script>
+<script src="src/ui.js?v=4b9b2753898f"></script>
+<script src="src/settingsui.js?v=4b9b2753898f"></script>
+<script src="src/shopui.js?v=4b9b2753898f"></script>
+<script src="src/shopstage.js?v=4b9b2753898f"></script>
+<script src="src/share.js?v=4b9b2753898f"></script>
+<script src="src/comicui.js?v=4b9b2753898f"></script>
+<script src="src/albumui.js?v=4b9b2753898f"></script>
+<script src="src/moods.js?v=4b9b2753898f"></script>
+<script src="src/update.js?v=4b9b2753898f"></script>
+<script src="src/main.js?v=4b9b2753898f"></script>
 </body>
 </html>

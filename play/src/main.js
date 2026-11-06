@@ -8,8 +8,19 @@ function hudUpdate(s) {
 }
 
 let lastTime = performance.now();
+const fpsCount = { frames: 0, secs: 0 };
+function fpsTick(raw) {
+  fpsCount.frames += 1;
+  fpsCount.secs += raw;
+  if (fpsCount.secs < 0.5) return;
+  $('fps').textContent = Math.round(fpsCount.frames / fpsCount.secs) + ' fps';
+  fpsCount.frames = 0;
+  fpsCount.secs = 0;
+}
+
 function frame(now) {
   const dt = Math.min(0.033, (now - lastTime) / 1000);
+  if (UI.save.prefs.fps) fpsTick((now - lastTime) / 1000);
   lastTime = now;
   Eng.clock += dt;
   Sound.sync(UI);
@@ -42,6 +53,7 @@ async function boot() {
   $('menuHero').src = spriteSrc('mood:calm:0');
   initUi();
   applyMute();
+  applyPrefs();
   Input.setMode(UI.save.controls);
   if (UI.save.controls === 'tilt' && !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) Input.tiltOn = true;
   applyLang();

@@ -6,7 +6,7 @@ const UI = { save: null, state: 'splash', run: null, demo: null, confirmYes: nul
 
 function setSave(next) { UI.save = next; persistSave(window.localStorage, next); metaAfterSave(); }
 
-const SCREENS = ['menu', 'hangar', 'daily', 'album', 'comic', 'pause', 'over', 'confirm', 'splash'];
+const SCREENS = ['menu', 'hangar', 'daily', 'album', 'comic', 'pause', 'settings', 'over', 'confirm', 'splash'];
 function showScreen(name) {
   SCREENS.forEach(id => $(id).classList.toggle('show', id === name));
   $('hud').classList.toggle('hidden', UI.state !== 'play' && UI.state !== 'pause');
@@ -36,7 +36,6 @@ function refreshText() {
   $('menuBest').textContent = nf(UI.save.best);
   $('menuCoins').textContent = nf(UI.save.coins);
   $('hangarCoins').textContent = nf(UI.save.coins);
-  $('controlsState').textContent = t('ctrl_' + UI.save.controls);
   $('menuHint').textContent = t(hintKey());
   refreshPass();
   $('dailyCoins').textContent = nf(UI.save.coins);
@@ -45,6 +44,7 @@ function refreshText() {
   $('muteBtn').setAttribute('aria-label', t('mute'));
   $('pauseBtn').setAttribute('aria-label', t('pause'));
   $('btnAlbum').setAttribute('aria-label', t('album'));
+  $('btnSettings').setAttribute('aria-label', t('settings'));
   $('uHeight').textContent = t(UI.run && UI.run.tower ? 'floorU' : 'm');
   refreshModeUi();
   refreshGameplayUi();
@@ -52,6 +52,7 @@ function refreshText() {
   if ($('daily').classList.contains('show')) renderDaily();
   if ($('album').classList.contains('show')) renderAlbum();
   if ($('comic').classList.contains('show')) renderComic();
+  if ($('settings').classList.contains('show')) renderSettings();
   refreshAlbumCount();
 }
 
@@ -109,7 +110,7 @@ function startPassNow() {
   refreshText();
 }
 
-function applyMute() { Sound.setMuted(UI.save.muted); }
+function applyMute() { Sound.setMuted(UI.save.muted); Sound.setPrefs(UI.save.prefs); }
 
 /* ---------- flow ---------- */
 function goMenu() {
@@ -243,15 +244,6 @@ function toggleMute() {
   refreshText();
 }
 
-async function cycleControls() {
-  const modes = availableModes();
-  const next = modes[(modes.indexOf(UI.save.controls) + 1) % modes.length];
-  if (next === 'tilt' && !(await enableTilt())) { toast(t('tiltDenied')); return; }
-  setSave(setSetting(UI.save, 'controls', next));
-  Input.setMode(next);
-  refreshText();
-}
-
 function initUi() {
   $('btnPlay').onclick = () => startGame(false);
   $('btnDaily').onclick = () => { Sound.start(); Sound.play('click'); openDaily(); };
@@ -260,9 +252,7 @@ function initUi() {
   $('btnPass').onclick = startPassNow;
   setInterval(() => { if (UI.state !== 'play' && UI.state !== 'pause' && UI.state !== 'splash') { if (!settleNow()) refreshPass(); } }, 15000);
   $('btnHeroes').onclick = () => { Sound.start(); Sound.play('click'); openHangar('menu'); };
-  $('btnControls').onclick = () => { Sound.start(); Sound.play('click'); cycleControls(); };
   $('shopTabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) { Sound.play('click'); SHOP.tab = b.dataset.tab; SHOP.tryLook = null; SHOP.prev = UI.save.hero; ['heroList', 'lookPane', 'upList'].forEach(id => { $(id).scrollTop = 0; }); renderShop(); } };
-  $('btnLang').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'lang', UI.save.lang === 'ar' ? 'en' : 'ar')); applyLang(); };
   $('muteBtn').onclick = () => { Sound.start(); toggleMute(); };
   $('pauseBtn').onclick = pauseGame;
   $('btnResume').onclick = resumeGame;
@@ -274,6 +264,7 @@ function initUi() {
   $('btnOverMenu').onclick = goMenu;
   $('btnShare').onclick = () => { Sound.play('click'); shareLastRun(); };
   initComicUi();
+  initSettingsUi();
   initAlbumUi();
   initMoods();
   $('hangarBack').onclick = () => { Sound.play('click'); if (UI.hangarFrom === 'over') { UI.state = 'over'; showScreen('over'); } else goMenu(); };
