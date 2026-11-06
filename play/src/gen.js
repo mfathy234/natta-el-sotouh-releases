@@ -3,16 +3,8 @@
 
 const metersAt = y => Math.max(0, Math.floor(-y / METER));
 
-function weightsAt(m) {
-  const S_ = WEIGHT_STOPS;
-  let i = 0;
-  while (i < S_.length - 1 && S_[i + 1].m <= m) i++;
-  const a = S_[i], b = S_[Math.min(i + 1, S_.length - 1)];
-  const k = b.m === a.m ? 0 : clamp((m - a.m) / (b.m - a.m), 0, 1);
-  const out = {};
-  new Set([...Object.keys(a.w), ...Object.keys(b.w)]).forEach(type => { out[type] = lerp(a.w[type] || 0, b.w[type] || 0, k); });
-  return out;
-}
+/** Platform weights at a height: the tier's row (TIERS in data.js), so the mix changes in steps. */
+const weightsAt = m => ({ ...tierAt(m).w });
 
 /** Seeded random in [a, b): s.rnd is Math.random in a normal run and a date-seeded generator in the daily challenge. */
 const rr = (s, a, b) => a + s.rnd() * (b - a);
@@ -25,8 +17,8 @@ function weightedPick(weights, rnd = Math.random) {
 }
 
 const gapRange = m => {
-  const k = clamp(m / GAP.fullAt, 0, 1);
-  return [lerp(GAP.min[0], GAP.min[1], k), lerp(GAP.max[0], GAP.max[1], k)];
+  const tier = tierAt(m), k = tier.gapK;
+  return [lerp(GAP.min[0], GAP.min[1], k) * tier.gapMul, lerp(GAP.max[0], GAP.max[1], k) * tier.gapMul];
 };
 
 /** Apex of a normal bounce (px). */
@@ -43,9 +35,9 @@ function jumpReach(gap, v = PHYS.bounce) {
 /** Largest centre-to-centre distance a ledge of width w may sit from the one below it, with the safety margin. */
 const maxStepX = (gap, w) => jumpReach(gap) * REACH.margin + w / 2;
 
-function makePlatform(type, x, y, rnd = Math.random) {
+function makePlatform(type, x, y, rnd = Math.random, widthK = 1) {
   const def = PLATFORMS[type];
-  const p = { type, x, y, w: def.w, kind: def.kind, state: 'ok', t: 0, vx: 0, press: 0 };
+  const p = { type, x, y, w: def.w * widthK, kind: def.kind, state: 'ok', t: 0, vx: 0, press: 0 };
   if (def.kind === 'moving') p.vx = (def.speed[0] + rnd() * (def.speed[1] - def.speed[0])) * (rnd() < 0.5 ? -1 : 1);
   return p;
 }
@@ -61,9 +53,10 @@ function pickPlatformType(s, m) {
 }
 
 function genPickups(s, p, m, gap) {
-  const odds = twistOdds(s);
+  const odds = twistOdds(s), tier = tierAt(m), tw = s.twist;
+  const coinChance = tw && tw.coinChance ? tw.coinChance : tier.coin;
   if (p.kind === 'normal' || p.kind === 'spring') {
-    if (s.rnd() < odds.coin) s.coins.push({ x: p.x, y: p.y - 34, got: false, ph: s.rnd() * 6 });
+    if (s.rnd() < coinChance) s.coins.push({ x: p.x, y: p.y - 34, got: false, ph: s.rnd() * 6 });
     else if (s.rnd() < COIN.lineChance) [-1, 0, 1].forEach(i => s.coins.push({ x: wrapX(p.x + i * 34), y: p.y - 56 - gap * 0.2, got: false, ph: i }));
     if (s.rnd() < POWERUPS.chance && s.lastPowY - p.y > POWERUPS.minSpacingPx) {
       const ok = ['kite', 'ful', 'bead'].filter(k => m >= POWERUPS[k].from);
@@ -74,12 +67,12 @@ function genPickups(s, p, m, gap) {
       }
     }
   }
-  const E = ENEMIES, pg = odds.pigeon;
-  if (s.lastEnemyY - p.y > odds.spacing) {
-    if (m >= pg.from && s.rnd() < pg.chance) {
+  const E = ENEMIES, pgChance = tw && tw.pigeonChance ? tw.pigeonChance : tier.pigeon, pgFrom = tw && tw.pigeonFrom != null ? tw.pigeonFrom : 0;
+  if (s.lastEnemyY - p.y > (tw && tw.spacing ? tw.spacing : tier.spacing)) {
+    if (m >= pgFrom && s.rnd() < pgChance) {
       s.enemies.push({ type: 'pigeon', x: wrapX(p.x + rr(s, -120, 120)), y: p.y - gap * 0.5 - 40, y0: p.y - gap * 0.5 - 40, st: 'idle', t: 0, ph: s.rnd() * 6, r: E.pigeon.r, vx: 0, vy: 0 });
       s.lastEnemyY = p.y;
-    } else if (m >= E.bag.from && s.rnd() < E.bag.chance) {
+    } else if (s.rnd() < tier.bag) {
       s.enemies.push({ type: 'bag', x: rr(s, 20, W - 20), y: p.y - gap * 0.5 - 30, y0: p.y - gap * 0.5 - 30, st: 'drift', t: 0, ph: s.rnd() * 6, r: E.bag.r, vx: rr(s, E.bag.speed[0], E.bag.speed[1]) * (s.rnd() < 0.5 ? -1 : 1), vy: 0 });
       s.lastEnemyY = p.y;
     }
@@ -94,13 +87,13 @@ function genUntil(s, topY) {
     const [lo, hi] = gapRange(m);
     const gap = Math.min(rr(s, lo, hi), jumpHeight() * REACH.maxGapShare);
     const type = pickPlatformType(s, m);
-    const def = PLATFORMS[type];
-    let x = clamp(wrapX(s.lastX + rr(s, -190, 190)), def.w / 2 + 4, W - def.w / 2 - 4);
-    const step = dxWrap(x, s.lastX), reach = maxStepX(gap, def.w);
-    const xLo = def.w / 2 + 4, xHi = W - def.w / 2 - 4;
+    const def = PLATFORMS[type], wk = tierAt(m).widthK, pw = def.w * wk;
+    let x = clamp(wrapX(s.lastX + rr(s, -190, 190)), pw / 2 + 4, W - pw / 2 - 4);
+    const step = dxWrap(x, s.lastX), reach = maxStepX(gap, pw);
+    const xLo = pw / 2 + 4, xHi = W - pw / 2 - 4;
     if (Math.abs(step) > reach) x = clamp(wrapX(s.lastX + Math.sign(step) * reach), xLo, xHi);
     if (Math.abs(dxWrap(x, s.lastX)) > reach) x = clamp(s.lastX - Math.sign(step) * reach * 0.5, xLo, xHi);
-    const p = makePlatform(type, x, s.genTop - gap, s.rnd);
+    const p = makePlatform(type, x, s.genTop - gap, s.rnd, wk);
     s.plats.push(p);
     s.genTop = p.y;
     s.lastX = x;

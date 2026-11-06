@@ -1,11 +1,14 @@
 /* The Tower, one run: hold to charge, aim, release to leap. Gravity arc, walls bounce, ledges catch you from above.
    Falling only costs height: you land on whatever ledge is below, at worst the last flag-ground. Shares fx helpers (puff, pop, updateFx) with play.js. */
 
+/* opts: { hero, startFloor, weekly: { key } }. A weekly run is a shorter, seeded tower (WEEKLY in data.js) that never touches the saved Tower progress. */
 function newTower(opts = {}) {
-  const T = TOWER, data = getTower(), start = Math.floor(clamp(opts.startFloor || 0, 0, T.top - 1) / T.checkEvery) * T.checkEvery;
+  const T = TOWER, wk = opts.weekly || null, top = wk ? WEEKLY.top : T.top, shift = wk ? WEEKLY.tierShift : 0;
+  const data = wk ? getTower(weeklySeed(wk.key), { top, shift }) : getTower();
+  const start = wk ? 0 : Math.floor(clamp(opts.startFloor || 0, 0, top - 1) / T.checkEvery) * T.checkEvery;
   const base = data.plats.find(pl => pl.type === 'ground' && pl.floor === start);
   return {
-    tower: true, demo: false, t: 0, over: false, overT: 0, ended: false, won: false, banked: false,
+    tower: true, demo: false, t: 0, over: false, overT: 0, ended: false, won: false, banked: false, top, shift, weekly: wk, winT: 0, banners: [], bawab: null, keys: [],
     plats: data.plats.map(pl => ({ ...pl })), coins: data.coins.map(c => ({ ...c })), pows: [], enemies: [], parts: [], pops: [], warns: [],
     cam: base.y - T.camRest, hero: opts.hero || DEFAULT_HERO,
     p: { x: W / 2, y: base.y, vx: 0, vy: 0, face: 1, landT: 0, hopT: 0, popT: 0, dead: false, inv: 0, shield: false, kite: 0, shoes: 0, on: base },
@@ -64,6 +67,7 @@ function towerLand(s, pl) {
   if (cp > s.checkpoint) {
     s.checkpoint = cp; s.cpHit = true;
     pop(s, t('flagSaved'), p.x, p.y - 80, K.gold);
+    bannerPush(s, towerTierBanner(cp, s.shift), 'tier');
     Sound.play('mile');
   }
   const lost = before - pl.floor;
@@ -72,7 +76,11 @@ function towerLand(s, pl) {
     showPop(pick(line).replace('{0}', nf(lost)));
   }
   s.fromFloor = pl.floor;
-  if (pl.type === 'ground' && pl.floor === T.top) { s.won = true; s.over = true; s.overT = 0; Sound.play('mile'); if (typeof showPop === 'function') showPop(pick(TOWER_LINES.win)); }
+  if (pl.type === 'ground' && pl.floor === s.top) {
+    s.won = true; s.over = true; s.overT = 0; s.winT = s.t; Sound.play('mile');
+    bannerPush(s, BAWAB.lines.beat, 'boss');
+    if (typeof showPop === 'function') showPop(pick(TOWER_LINES.win));
+  }
 }
 const pick2 = arr => arr[Math.floor(Math.random() * arr.length)];
 
@@ -140,11 +148,14 @@ function updateTower(s, dt) {
     towerPickups(s);
     p.landT = Math.max(0, p.landT - dt);
     p.hopT = Math.max(0, p.hopT - dt);
+    updateBawab(s, dt);
   } else {
+    updateBawab(s, dt);
     s.overT += dt;
     if (s.overT > 1.3) s.ended = true;
   }
   towerCamera(s, dt);
   updateFx(s, dt);
+  updateBanners(s, dt);
 }
 

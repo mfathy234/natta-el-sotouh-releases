@@ -121,7 +121,14 @@ const STR = {
   hint_tower_buttons: ['دوس يمين أو شمال للشحن، وسيب!', 'Hold left or right to charge, release!'],
   hint_tower_mouse: ['دوس للشحن، حرّك الماوس للتصويب، وسيب!', 'Hold to charge, move to aim, release!'],
   hint_tower_keys: ['المسطرة للشحن، الأسهم للتصويب، وسيب!', 'Space to charge, arrows to aim, release!'],
-  shieldBroke: ['الخرزة شالت عنك الضربة', 'The bead took the hit']
+  shieldBroke: ['الخرزة شالت عنك الضربة', 'The bead took the hit'],
+  wet: ['اتبلّيت!', 'Soaked!'],
+  ouch: ['آه!', 'Ouch!'],
+  weeklyBtn: ['برج الأسبوع', 'Weekly Tower'],
+  weeklyWon: ['الوقت {0} · الأحسن {1}', 'Time {0} · best {1}'],
+  weeklyLost: ['ما وصلتش · الأحسن {0}', 'Not yet · best {0}'],
+  weeklyReward: ['+{0} عملة', '+{0} coins'],
+  ghostBtn: ['الشبح', 'Ghost']
 };
 
 const LANG = { cur: 'ar' };

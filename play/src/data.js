@@ -78,20 +78,13 @@ const ENEMIES = {
 
 /* The Tower (charge-jump mode). Hold to charge, aim left or right, release to leap. Walls bounce, no wrap.
    power 0..1 maps to launch speed vmin..vmax; aim -1..1 maps to +-maxAngle from straight up. The tower is seeded: the same every time.
-   snapPower = the most charge a jump FROM a laundry line may need (it snaps snap.warn seconds after you land). mix: platform weights from a floor on (the last stop at or below the floor is used). Floors that are a multiple of checkEvery are solid ground with a flag. */
+   snapPower = the most charge a jump FROM a laundry line may need (it snaps snap.warn seconds after you land). Ledge widths, sideways reach and platform mix by floor are in TOWER_TIERS below. Floors that are a multiple of checkEvery are solid ground with a flag. */
 const TOWER = {
   seed: 20260, top: 100, floorH: 92, checkEvery: 10, wall: 14, radius: 14,
   gravity: 1500, vmin: 430, vmax: 930, maxAngle: 0.96, chargeTime: 0.95, wallBounce: 0.7, edge: 8,
-  dragPx: 90, aimRate: 1.7, mouseRange: 110, widthScale: 1.25, maxDx: 165, camRest: 470,
+  dragPx: 90, aimRate: 1.7, mouseRange: 110, maxDx: 165, camRest: 470,
   coinChance: 0.35, catchCoin: 0.45, secondCatch: 0.35, previewTime: 1.7,
-  snap: { warn: 1.2, fall: 0.6, back: 3.5 }, snapPower: 0.7, slick: { friction: 150, keep: 0.4 }, fallLine: 3,
-  mix: [
-    { f: 1, w: { balcony: 10 } },
-    { f: 5, w: { balcony: 8, ac: 4 } },
-    { f: 14, w: { balcony: 5, ac: 4, laundry: 3, tank: 3 } },
-    { f: 40, w: { ac: 3, laundry: 3, tank: 4, tower: 5, minaret: 2 } },
-    { f: 70, w: { laundry: 3, tower: 3, minaret: 5, cloud: 4 } }
-  ]
+  snap: { warn: 1.2, fall: 0.6, back: 3.5 }, snapPower: 0.7, slick: { friction: 150, keep: 0.4 }, fallLine: 3
 };
 
 const TOWER_LINES = {
@@ -210,8 +203,110 @@ const FACADE = { fadeFrom: 55, fadeTo: 110, factor: 0.55, tile: 320 };
 
 const SAVE_KEY = 'natta.save.v1';
 
+/* ---------- Difficulty tiers ----------
+   Free mode: tier = floor(metres / TIER_STEP), the last row repeats. Every tier adds one thing and the first two are gentle.
+   widthK = ledge width multiplier, gapK = 0..1 position on the GAP range, gapMul = scale on the gaps, w = platform weights,
+   pigeon / bag = chance per ledge (0 = none), crow / slipper = interval multiplier (0 = none), spacing = min px between ground enemies,
+   coin = coin chance per ledge, nbr = [bucket, pull] neighbour hazards on, ar / en = banner text after "الدور <ordinal>:". */
+const TIER_STEP = 50;
+const ORDINALS = { ar: ['الأول', 'التاني', 'التالت', 'الرابع', 'الخامس', 'السادس', 'السابع', 'التامن', 'التاسع', 'العاشر'] };
+const TIERS = [
+  { widthK: 1.4, gapK: 0, gapMul: 0.88, coin: 0.4, spacing: 600, pigeon: 0, bag: 0, crow: 0, slipper: 0, nbr: [0, 0], w: { balcony: 10, ac: 4, dish: 1.2 },
+    ar: 'نط براحة، الأدوار واسعة', en: 'Easy does it, wide ledges' },
+  { widthK: 1.35, gapK: 0.1, gapMul: 0.92, coin: 0.36, spacing: 600, pigeon: 0, bag: 0, crow: 0, slipper: 0, nbr: [0, 0], w: { balcony: 9, ac: 4, dish: 1.5, laundry: 2.5 },
+    ar: 'حبال الغسيل بتقطع!', en: 'Laundry lines snap!' },
+  { widthK: 1.3, gapK: 0.2, gapMul: 0.96, coin: 0.34, spacing: 600, pigeon: 0, bag: 0, crow: 0, slipper: 0, nbr: [0, 0], w: { balcony: 7, ac: 4, dish: 1.5, laundry: 2.5, plank: 2, shutter: 1.5 },
+    ar: 'الألواح بتتحرك والشيش بيتقلب!', en: 'Moving planks and flipping shutters!' },
+  { widthK: 1.25, gapK: 0.3, gapMul: 1, coin: 0.32, spacing: 560, pigeon: 0.05, bag: 0, crow: 0, slipper: 0, nbr: [0, 0], w: { balcony: 5, ac: 3, dish: 1.5, laundry: 3, plank: 2.5, shutter: 2, tank: 3 },
+    ar: 'الحمام وصل!', en: 'The pigeons have arrived!' },
+  { widthK: 1.2, gapK: 0.4, gapMul: 1, coin: 0.3, spacing: 500, pigeon: 0.06, bag: 0, crow: 0, slipper: 1.7, nbr: [0, 0], w: { balcony: 4, ac: 3, dish: 1.5, laundry: 3, plank: 2.5, shutter: 2, tank: 4, tower: 1 },
+    ar: 'الشباشب بتنزل من فوق!', en: 'Slippers rain down!' },
+  { widthK: 1.15, gapK: 0.5, gapMul: 1, coin: 0.3, spacing: 460, pigeon: 0.07, bag: 0, crow: 1.6, slipper: 1.5, nbr: [1, 0], w: { balcony: 3, ac: 2, dish: 1.5, laundry: 3, plank: 3, shutter: 2, tank: 6, tower: 2 },
+    ar: 'الغربان والجيران صحيوا!', en: 'Crows, and the neighbours woke up!' },
+  { widthK: 1.1, gapK: 0.6, gapMul: 1, coin: 0.3, spacing: 420, pigeon: 0.08, bag: 0.06, crow: 1.4, slipper: 1.4, nbr: [1, 1], w: { ac: 1, dish: 1.5, laundry: 3, plank: 3, shutter: 2, tank: 5, tower: 5, minaret: 1 },
+    ar: 'أكياس بلاستيك والجارة بتسحب الغسيل!', en: 'Plastic bags, and a neighbour pulls the laundry!' },
+  { widthK: 1.05, gapK: 0.8, gapMul: 1, coin: 0.3, spacing: 400, pigeon: 0.09, bag: 0.07, crow: 1.2, slipper: 1.2, nbr: [1, 1], w: { dish: 1.5, laundry: 2.5, plank: 3, shutter: 2, tank: 3, tower: 4, minaret: 3, cloud: 1 },
+    ar: 'المسافات بقت أطول!', en: 'The gaps get longer!' },
+  { widthK: 1, gapK: 0.9, gapMul: 1, coin: 0.3, spacing: 380, pigeon: 0.1, bag: 0.08, crow: 1.1, slipper: 1.1, nbr: [1, 1], w: { dish: 1, laundry: 2, plank: 3, shutter: 2, tower: 2, minaret: 6, cloud: 4 },
+    ar: 'المنارات والسحاب، ركّز!', en: 'Minarets and clouds, focus!' },
+  { widthK: 1, gapK: 1, gapMul: 1, coin: 0.3, spacing: 380, pigeon: 0.1, bag: 0.08, crow: 1, slipper: 1, nbr: [1, 1], w: { laundry: 2, plank: 3, shutter: 2, minaret: 3, cloud: 9 },
+    ar: 'ده الدور اللي بجد!', en: 'Now it is for real!' }
+];
+
+/* The Tower: tier = floor((floor + shift) / checkEvery). scale = ledge width multiplier, reach = share of TOWER.maxDx a ledge may sit sideways from the one below,
+   need = how many (charge, aim) pairs must land on a ledge from its middle (more = more forgiving), mix = platform weights. */
+const TOWER_TIERS = [
+  { scale: 1.75, reach: 0.3, need: 30, mix: { balcony: 10 }, ar: 'أدوار واسعة وصديقة', en: 'Wide, friendly ledges' },
+  { scale: 1.65, reach: 0.4, need: 22, mix: { balcony: 8, ac: 2 }, ar: 'مكيفات بتزحلق', en: 'Slippery air-conditioners' },
+  { scale: 1.55, reach: 0.5, need: 16, mix: { balcony: 6, ac: 3, tank: 2 }, ar: 'خزانات المية', en: 'Water tanks' },
+  { scale: 1.45, reach: 0.6, need: 12, mix: { balcony: 5, ac: 4, laundry: 1.5, tank: 3 }, ar: 'حبال الغسيل بتقطع', en: 'Laundry lines snap' },
+  { scale: 1.4, reach: 0.7, need: 9, mix: { balcony: 4, ac: 4, laundry: 3, tank: 3, tower: 1 }, ar: 'أبراج الحمام', en: 'Pigeon towers' },
+  { scale: 1.35, reach: 0.8, need: 7, mix: { ac: 3, laundry: 3, tank: 4, tower: 3 }, ar: 'الدنيا بتصعب', en: 'It gets harder' },
+  { scale: 1.3, reach: 0.9, need: 6, mix: { ac: 3, laundry: 3, tank: 4, tower: 5, minaret: 2 }, ar: 'المنارات', en: 'Minarets' },
+  { scale: 1.25, reach: 1, need: 5, mix: { laundry: 3, tower: 4, minaret: 5, cloud: 2 }, ar: 'قرّبنا من السحاب', en: 'Nearing the clouds' },
+  { scale: 1.25, reach: 1, need: 5, mix: { laundry: 3, tower: 3, minaret: 5, cloud: 4 }, ar: 'فوق السحاب', en: 'Above the clouds' },
+  { scale: 1.25, reach: 1, need: 5, mix: { laundry: 3, tower: 3, minaret: 5, cloud: 4 }, ar: 'البواب مستنيك!', en: 'The doorman is waiting!' }
+];
+
+/* Neighbours (الجيران), free mode. bucket: a window opens on one side, a hand with a bucket takes aim (red column, shadow on your row, "!"),
+   then water pours down: it knocks you down a little and washes coins away. pull: a hand reaches out of a window, the laundry line shakes with "!",
+   then the line is pulled in. every = seconds between hazards, warn = telegraph time. */
+const NEIGHBOURS = {
+  bucket: { every: [16, 24], warn: 1.25, lock: 0.3, pour: 0.55, speed: 1100, width: 44, knock: 520, inv: 0.7, washR: 30 },
+  pull: { every: [20, 30], warn: 1.1, pull: 0.45, minY: 110, maxY: 430 },
+  window: { w: 58, h: 64, y: 78 }
+};
+
+/* Rooftop events, free mode: one about every `every` metres from `first`, picked from `pool` (never twice in a row), announced with a banner.
+   flock: a band at your height lights up, then birds sweep across. prayer: calm slow-mo and golden light, bonus coins. powercut: dark, platforms glow.
+   wedding: firework rockets on ledges launch you. gust: arrows on one side, then a sideways push. */
+const EVENTS = {
+  every: 100, first: 100, jitter: 20, gap: 40,
+  pool: ['flock', 'prayer', 'powercut', 'wedding', 'gust'],
+  flock: { ar: 'سرب حمام عدّي!', en: 'A pigeon flock!', warn: 1.4, birds: 8, speed: 560, band: 76, r: 13 },
+  prayer: { ar: 'وقت الأذان.. الدنيا هديت', en: 'Call to prayer. The city goes calm', time: 3, slow: 0.55, coins: 9 },
+  powercut: { ar: 'الكهربا قطعت!', en: 'Power cut!', time: 5, fade: 0.7, dark: 0.82 },
+  wedding: { ar: 'فرح في الشارع! اركب الصاروخ', en: 'A wedding! Ride the firework', time: 9, power: 1300, rockets: 3, r: 26 },
+  gust: { ar: 'هبّة هوا من الجنب!', en: 'Wind gust!', warn: 1.2, time: 3.2, push: 150 }
+};
+
+/* Tower boss El Bawab (البواب): appears when you reach the flag-ground `floors` below the roof, rises from `start` floors under it at `rise` px/s
+   (faster when you are far above, slower when close), throws slippers and keys with a red arc and "!" first. A hit knocks you off the ledge.
+   Catching up with your feet sends you back to the flag-ground. Reaching the roof beats him. */
+const BAWAB = {
+  floors: 10, start: 2.6, rise: 15, closeFloors: 0.9, farFloors: 2.2, minK: 0.5, maxK: 1.6, size: 92,
+  throw: { every: [5.5, 7.5], warn: 1, speed: 480, r: 12, hop: 330, push: 190, inv: 0.9 },
+  lines: {
+    start: { ar: 'البواب: واقف عندك يا قطة!', en: 'El Bawab: stop right there, cat!' },
+    caught: { ar: 'البواب مسكك! من الأول', en: 'El Bawab caught you! Again' },
+    beat: { ar: 'البواب: خلاص خلاص، السطوح بتاعتك يا مرعي!', en: 'El Bawab: fine, fine, the roof is yours, Mar3y!' }
+  }
+};
+
+/* Combos: stomps, spring launches and coins within `window` s of each other build a chain. Each step names the chain length, the multiplier on the bonus points
+   and the shout shown big in the middle. points = base bonus per kind (multiplied by mult - 1 on top of what the action already gives). */
+const COMBO = {
+  window: 2.2, points: { stomp: 10, spring: 6, coin: 2 },
+  steps: [
+    { n: 3, mult: 1.5, ar: 'عاش!', en: 'Nice!' },
+    { n: 6, mult: 2, ar: 'قشطة!', en: 'Smooth!' },
+    { n: 10, mult: 3, ar: 'يا جامد!', en: 'Awesome!' },
+    { n: 16, mult: 4, ar: 'عنب!', en: 'Grape-tastic!' }
+  ]
+};
+
+const BANNER = { time: 2.8, shoutTime: 1.0, y: 142, strips: 2 };
+
+/* Ghost race: the best free run is sampled every `dt` s and drawn translucent in later runs. key is its own localStorage entry. */
+const GHOST = { key: 'natta.ghost.v1', dt: 0.2, max: 3000, alpha: 0.4, line: { ar: 'عدّيت شبحك!', en: 'You passed your ghost!' } };
+
+/* Weekly Tower: `top` floors, seeded by the ISO week, starts `tierShift` tiers up. reward = coins for the first clear of a week. */
+const WEEKLY = { top: 30, seedBase: 770000, tierShift: 3, reward: 150 };
+
+
 const NATTA_DATA = {
   W, H, METER, COIN_SCORE, PHYS, FEEL, TOWER, TOWER_LINES, PLATFORMS, WEIGHT_STOPS, GAP, MAX_UNSAFE_RUN, REACH, COIN, POWERUPS, ENEMIES,
-  HEROES, DEFAULT_HERO, CONTROL_MODES, DEFAULT_CONTROLS, CONTROLS, LOOK_SLOTS, SLOT_NAMES, LOOKS, UPGRADES, DAILY, MISSIONS, MILESTONES, FALL_LINES, SKY, PASS, FACADE, SAVE_KEY
+  HEROES, DEFAULT_HERO, CONTROL_MODES, DEFAULT_CONTROLS, CONTROLS, LOOK_SLOTS, SLOT_NAMES, LOOKS, UPGRADES, DAILY, MISSIONS, MILESTONES, FALL_LINES, SKY, PASS, FACADE, SAVE_KEY,
+  TIER_STEP, ORDINALS, TIERS, TOWER_TIERS, NEIGHBOURS, EVENTS, BAWAB, COMBO, BANNER, GHOST, WEEKLY
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = NATTA_DATA;

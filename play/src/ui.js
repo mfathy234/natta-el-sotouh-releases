@@ -47,6 +47,7 @@ function refreshText() {
   $('btnAlbum').setAttribute('aria-label', t('album'));
   $('uHeight').textContent = t(UI.run && UI.run.tower ? 'floorU' : 'm');
   refreshModeUi();
+  refreshGameplayUi();
   if ($('hangar').classList.contains('show')) renderShop();
   if ($('daily').classList.contains('show')) renderDaily();
   if ($('album').classList.contains('show')) renderAlbum();
@@ -127,10 +128,11 @@ function startGame(daily = false) {
   Sound.start();
   Sound.play('click');
   const key = dateKey(), loadout = runLoadout(UI.save), hero = UI.save.hero;
-  UI.mode = daily === true ? 'daily' : 'normal';
+  UI.mode = daily === true ? 'daily' : daily === 'weekly' ? 'weekly' : 'normal';
   UI.hazards = new Set();
   UI.towerBestAtStart = UI.save.tower.best;
-  if (UI.mode === 'normal' && UI.save.mode === 'tower') UI.run = newTower({ hero, startFloor: towerStartFloor() });
+  if (UI.mode === 'weekly') UI.run = newWeekly({ hero });
+  else if (UI.mode === 'normal' && UI.save.mode === 'tower') UI.run = newTower({ hero, startFloor: towerStartFloor() });
   else {
     setSave(consumeBoost(UI.save));
     UI.run = newRun({ hero, startMeters: UI.debugMeters, daily: UI.mode === 'daily' ? { key } : null, loadout, worn: wornOf(UI.save, hero) });
@@ -181,11 +183,12 @@ function trackHint(s, dt) {
 
 /** Keep the saved best floor and checkpoint in step with the run, so quitting never loses them. */
 function syncTower(s) {
-  if (!s.progress && !s.cpHit) return;
+  if (s.weekly || (!s.progress && !s.cpHit)) return;
   s.progress = s.cpHit = false;
   setSave(towerProgress(UI.save, s.maxFloor, Date.now()));
 }
 function bankTower(s) {
+  if (s.weekly) { weeklyBank(s); return; }
   if (s.banked) return;
   s.banked = true;
   const next = recordTower(UI.save, { floor: s.maxFloor, coins: s.coinsGot, won: s.won }, Date.now()), newBest = s.maxFloor > UI.towerBestAtStart;
@@ -203,6 +206,7 @@ function finishTower() {
   $('overBestLine').textContent = t('towerLine', nf(UI.save.tower.best), nf(towerStartFloor()));
   $('overHeroBox').replaceChildren(heroView(UI.save.hero, 'slouch', wornOf(UI.save, UI.save.hero), 'over-hero'));
   Sound.voice(s.won ? 'roof' : 'ground');
+  if (s.weekly) weeklyOverText(s);
   showScreen('over');
 }
 
@@ -264,7 +268,7 @@ function initUi() {
   $('btnQuit').onclick = () => { if (UI.run && UI.run.tower) bankTower(UI.run); goMenu(); };
   $('btnModeFree').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'mode', 'free')); refreshText(); };
   $('btnModeTower').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'mode', 'tower')); refreshText(); };
-  $('btnRetry').onclick = () => startGame(UI.mode === 'daily');
+  $('btnRetry').onclick = () => startGame(UI.mode === 'weekly' ? 'weekly' : UI.mode === 'daily');
   $('btnOverHeroes').onclick = () => openHangar('over');
   $('btnOverMenu').onclick = goMenu;
   $('btnShare').onclick = () => { Sound.play('click'); shareLastRun(); };
@@ -278,7 +282,8 @@ function initUi() {
     if (e.repeat) return;
     if (e.code === 'KeyM') { toggleMute(); return; }
     if (e.code === 'Escape' || e.code === 'KeyP') { if (UI.state === 'play') pauseGame(); else if (UI.state === 'pause') resumeGame(); }
-    if ((e.code === 'Enter' || e.code === 'Space') && UI.state === 'over' && $('over').classList.contains('show')) startGame(UI.mode === 'daily');
+    if ((e.code === 'Enter' || e.code === 'Space') && UI.state === 'over' && $('over').classList.contains('show')) startGame(UI.mode === 'weekly' ? 'weekly' : UI.mode === 'daily');
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+  initGameplayUi();
 }

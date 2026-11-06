@@ -55,6 +55,8 @@ function renderPlatforms(s) {
     if (sy < -40 || sy > H + 40) return;
     const o = { sx: pl.w / 64, alpha: 1 };
     const key = `plat:${pl.type}:${platFrame(pl)}`;
+    if (pl.state === 'pulled') o.alpha = clamp(1 - pl.t / 0.55, 0, 1);
+    if (pl.shake) { drawSpr(key, pl.x + Math.sin(Eng.clock * 55) * 2.4, sy, o); return; }
     if (pl.state === 'snap') { o.alpha = clamp(1 - pl.t / 0.7, 0, 1); drawSpr(key, pl.x, sy + pl.t * 220, { ...o, rot: pl.t * 1.2 }); return; }
     if (pl.state === 'flip') { o.sy = clamp(1 - pl.t / 0.35, 0.05, 1); o.alpha = o.sy; }
     if (pl.type === 'dish' || pl.type === 'tower') o.sy = beatBounce(pl.x * 0.01, 0.015);
@@ -175,12 +177,20 @@ function renderRun(s) {
   if (s.tower) { renderTower(s); return; }
   renderSky(s);
   if (s.demo) return;
+  renderEventBack(s);
   renderTwistBack(s);
   renderPlatforms(s);
   renderPickups(s);
+  renderNeighbourBack(s);
+  renderEventMid(s);
   renderTelegraphs(s);
   renderEnemies(s);
+  renderGhost(s);
   renderHero(s);
+  renderNeighbourFront(s);
   renderTwistFront(s);
+  renderEventFront(s);
   renderParts(s);
+  renderCombo(s);
+  renderBanners(s);
 }

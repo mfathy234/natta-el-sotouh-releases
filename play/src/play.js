@@ -12,8 +12,11 @@ function newRun(opts = {}) {
     genTop: py, lastX: W / 2, unsafeRun: 0, lastPowY: py + 1e4, lastEnemyY: py + 1e4,
     p: { x: W / 2, y: py - PHYS.halfH, vx: 0, vy: 0, face: 1, landT: 0, dead: false, inv: 0, shield: load.shield, kite: 0, shoes: 0, hopT: 0 },
     maxUp: startM * METER, meters: startM, coinsGot: 0, bonus: 0, milestone: 0,
-    crowT: rand(...ENEMIES.crow.every), slipT: rand(...ENEMIES.slipper.every), hero: opts.hero || DEFAULT_HERO
+    crowT: rand(...ENEMIES.crow.every), slipT: rand(...ENEMIES.slipper.every), hero: opts.hero || DEFAULT_HERO,
+    startM, banners: [], combo: comboNew(), tierIdx: tierIndex(startM), rec: { acc: 0, pts: [] }, ghost: ghostForRun({ ...opts, daily }), ghostBehind: false, ghostPassed: false
   };
+  s.nbr = nbrNew(s.rnd);
+  eventsInit(s, startM);
   s.cam0 = s.cam;
   s.magR = perkMagnet(s, load);
   s.plats.push(makePlatform('balcony', W / 2, py, s.rnd));
@@ -44,6 +47,10 @@ function landOn(s, pl) {
   let power = PHYS.bounce, sound = 'jump';
   if (spring) { power = PHYS.spring; sound = 'spring'; pl.press = 0.25; }
   else if (p.shoes > 0) { power = PHYS.shoes; p.shoes -= 1; sound = 'spring'; }
+  const base = power;
+  power = eventBounce(s, pl, power);
+  if (power > base) sound = 'spring';
+  if (power > PHYS.bounce) comboHit(s, 'spring');
   launch(s, perkBounce(s, power), sound);
   puff(s, p.x, pl.y - 2, spring ? 7 : 4, pl.w);
   if (pl.type === 'cloud') pl.press = 0.4;
@@ -56,6 +63,7 @@ function killEnemy(s, e, stomp) {
   puff(s, e.x, e.y, 7, 30, 'puff');
   if (stomp) {
     s.bonus += 10; pop(s, '+' + nf(10), e.x, e.y - 20, K.gold); Sound.play('stomp');
+    comboHit(s, 'stomp');
     if (e.type === 'pigeon') {
       s.stats.pigeons += 1;
       const extra = s.twist && s.twist.stompCoins;
@@ -112,7 +120,7 @@ function updatePlayer(s, dt) {
   if (p.vy > 0 && !p.dead && p.kite <= 0) {
     const feet = p.y + PHYS.halfH;
     for (const pl of s.plats) {
-      if (pl.state === 'snap' || pl.state === 'flip') continue;
+      if (pl.state === 'snap' || pl.state === 'flip' || pl.state === 'pulled') continue;
       if (prevFeet <= pl.y + PHYS.feetSlack && feet >= pl.y && Math.abs(dxWrap(p.x, pl.x)) <= pl.w / 2 + FEEL.edge) {
         const off = dxWrap(p.x, pl.x);
         if (Math.abs(off) > pl.w / 2 - 2) {
@@ -136,21 +144,22 @@ function updatePlatforms(s, dt) {
     }
     if (pl.type === 'ac' && Math.random() < dt * 0.9) s.parts.push({ kind: 'drop', x: pl.x + 14, y: pl.y + 14, vx: 0, vy: 40, r: 2.4, t: 0, life: 0.9 });
   });
-  s.plats = s.plats.filter(pl => !((pl.state === 'snap' && pl.t > 0.7) || (pl.state === 'flip' && pl.t > 0.35)) && pl.y < s.cam + H + 120);
+  s.plats = s.plats.filter(pl => !((pl.state === 'snap' && pl.t > 0.7) || (pl.state === 'flip' && pl.t > 0.35) || (pl.state === 'pulled' && pl.t > 0.55)) && pl.y < s.cam + H + 120);
 }
 
 function updateEnemies(s, dt) {
-  const p = s.p, E = ENEMIES, m = s.meters;
+  const p = s.p, E = ENEMIES, m = s.meters, tier = tierAt(m);
   if (!s.demo && !p.dead) {
-    s.crowT -= dt; s.slipT -= dt;
-    if (m >= E.crow.from && s.crowT <= 0) {
-      s.crowT = rand(...E.crow.every) * clamp(1.4 - m / 1500, 0.6, 1.4);
+    if (tier.crow) s.crowT -= dt; else s.crowT = 6;
+    if (tier.slipper) s.slipT -= dt; else s.slipT = 6;
+    if (tier.crow && s.crowT <= 0) {
+      s.crowT = rand(...E.crow.every) * tier.crow * clamp(1.4 - m / 1500, 0.6, 1.4);
       const dir = Math.random() < 0.5 ? 1 : -1;
       s.enemies.push({ type: 'crow', st: 'warn', t: 0, dir, x: dir > 0 ? -30 : W + 30, sy: clamp(p.y - s.cam - 120, 90, 320), y: 0, r: E.crow.r, ph: 0 });
       Sound.play('warn');
     }
-    if (m >= E.slipper.from && s.slipT <= 0) {
-      s.slipT = rand(...E.slipper.every) * clamp(1.4 - m / 1500, 0.6, 1.4);
+    if (tier.slipper && s.slipT <= 0) {
+      s.slipT = rand(...E.slipper.every) * tier.slipper * clamp(1.4 - m / 1500, 0.6, 1.4);
       s.enemies.push({ type: 'slipper', st: 'warn', t: 0, x: p.x, y: s.cam - 40, r: E.slipper.r, rot: 0 });
       Sound.play('warn');
     }
@@ -207,6 +216,7 @@ function updatePickups(s) {
     if (!c.got && s.magR > 0 && d < s.magR && d > 1 && !p.dead) { const pull = Math.min(d, (200 + 320 * (1 - d / (s.magR + 30))) * (s.dt || 0.016)); c.x = wrapX(c.x + (dx / d) * pull); c.y += (dy / d) * pull; }
     if (!c.got && d < 26) {
       c.got = true; s.coinsGot += s.coinMult; s.stats.coins += 1; Sound.play('coin');
+      comboHit(s, 'coin');
       puff(s, c.x, c.y, 4, 14, 'spark');
     }
   });
@@ -235,6 +245,7 @@ function updateFx(s, dt) {
 function updateRun(s, dt) {
   if (s.tower) { updateTower(s, dt); return; }
   if (s.slowT > 0) { s.slowT -= dt; dt *= FEEL.slowScale; }
+  dt *= eventTimeScale(s);
   s.t += dt;
   s.dt = dt;
   updatePlayer(s, dt);
@@ -249,12 +260,18 @@ function updateRun(s, dt) {
     s.meters = Math.max(s.meters, Math.floor(s.maxUp / METER));
     if (p.y < s.cam + PHYS.camLine) s.cam = p.y - PHYS.camLine;
     genUntil(s, s.cam - 700);
+    updateTier(s);
+    updateEvents(s, dt);
+    updateNeighbours(s, dt);
+    updateCombo(s, dt);
+    ghostTick(s, dt);
     if (s.daily && !s.targetHit && s.meters >= s.target) { s.targetHit = true; if (typeof showPop === 'function') showPop(t('targetHit')); Sound.play('mile'); }
     const ms = MILESTONES[s.milestone];
     if (ms && s.meters >= ms.m) { s.milestone++; if (typeof showPop === 'function') showPop(pick(ms)); Sound.play('mile'); }
     if (!s.over && p.y - s.cam > H + 60) { s.over = true; s.overT = 0; Sound.play('over'); }
     if (p.dead && !s.over && p.y - s.cam > H + 80) { s.over = true; s.overT = 0; Sound.play('over'); }
-    if (s.over) { s.overT += dt; if (s.overT > 0.5) s.ended = true; }
+    if (s.over) { s.overT += dt; if (s.overT > 0.5) { s.ended = true; ghostFinish(s); } }
+    updateBanners(s, dt);
   }
   updateFx(s, dt);
 }

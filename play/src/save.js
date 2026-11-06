@@ -14,13 +14,16 @@ const heroById = id => HEROES.find(h => h.id === id) || null;
 const asObject = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 const dateKeyOr = v => (typeof v === 'string' && DATE_KEY.test(v) ? v : '');
 
+const WEEK_KEY = /^\d{4}-W\d{2}$/;
+const newWeeklySave = () => ({ key: '', best: 0, rewarded: '' });
+
 function newDaily() { return { date: '', best: 0, done: false, streak: 0, lastWin: '', bests: {} }; }
 function newMissions() { return { date: '', prog: {}, done: [] }; }
 
 function newSave(now = 0) {
   return {
     v: SAVE_VERSION, createdAt: now, updatedAt: now, hero: DEFAULT_HERO, owned: [...FREE_HEROES], best: 0, coins: 0, runs: 0, lang: 'ar', muted: false, controls: DEFAULT_CONTROLS, hintSeen: false,
-    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions(), mode: 'free', tower: newTowerSave(), passUntil: 0, meta: newMeta()
+    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions(), mode: 'free', tower: newTowerSave(), passUntil: 0, meta: newMeta(), ghost: true, weekly: newWeeklySave()
   };
 }
 
@@ -43,6 +46,13 @@ function sanitizeDaily(raw) {
   const bests = {};
   Object.keys(asObject(d.bests)).filter(k => DATE_KEY.test(k)).sort().slice(-keep).forEach(k => { bests[k] = toInt(d.bests[k], 0, 1e7); });
   return { date: dateKeyOr(d.date), best: toInt(d.best, 0, 1e7), done: d.done === true, streak: toInt(d.streak, 0, 1e5), lastWin: dateKeyOr(d.lastWin), bests };
+}
+
+/** Weekly Tower record: this week's key, best time in ms (0 = none) and the week that paid its reward. */
+function sanitizeWeeklySave(raw) {
+  const r = asObject(raw), n = Number(r.best);
+  const key = typeof r.key === 'string' && WEEK_KEY.test(r.key) ? r.key : '';
+  return { key, best: key && Number.isFinite(n) ? Math.max(0, Math.min(1e8, Math.floor(n))) : 0, rewarded: typeof r.rewarded === 'string' && WEEK_KEY.test(r.rewarded) ? r.rewarded : '' };
 }
 
 function sanitizeMissions(raw) {
@@ -83,7 +93,9 @@ function sanitizeSave(raw, now = Date.now()) {
     mode: raw.mode === 'tower' ? 'tower' : 'free',
     tower: sanitizeTower(raw.tower),
     passUntil,
-    meta: sanitizeMeta(raw.meta)
+    meta: sanitizeMeta(raw.meta),
+    ghost: raw.ghost !== false,
+    weekly: sanitizeWeeklySave(raw.weekly)
   };
 }
 
@@ -174,5 +186,5 @@ function persistSave(storage, save) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { newSave, sanitizeSave, recordRun, canBuyHero, buyHero, selectHero, setSetting, loadSave, persistSave, earnedHeroes, passActive, passRemaining, passSplit, startPass, heroFlies, settlePass, passClock, sanitizeTower, towerProgress, recordTower };
+  module.exports = { newSave, sanitizeSave, recordRun, canBuyHero, buyHero, selectHero, setSetting, loadSave, persistSave, earnedHeroes, passActive, passRemaining, passSplit, startPass, heroFlies, settlePass, passClock, sanitizeTower, towerProgress, recordTower, sanitizeWeeklySave, newWeeklySave };
 }

@@ -71,41 +71,37 @@ function towerSolve(x0, y0, target, o = {}) {
   return out.sort((a, b) => b.margin - a.margin);
 }
 
-function towerMix(n) {
-  let stop = TOWER.mix[0];
-  TOWER.mix.forEach(s => { if (s.f <= n) stop = s; });
-  return stop.w;
-}
-function towerPickType(rnd, n) {
-  const entries = Object.entries(towerMix(n));
+const towerMix = (n, shift = 0) => towerTierAt(n, shift).mix;
+function towerPickType(rnd, n, shift = 0) {
+  const entries = Object.entries(towerMix(n, shift));
   let r = rnd() * entries.reduce((s, [, w]) => s + w, 0);
   for (const [type, w] of entries) { r -= w; if (r <= 0) return type; }
   return entries[0][0];
 }
 
-function towerPlat(type, x, y, floor, extra = {}) {
+function towerPlat(type, x, y, floor, extra = {}, scale = 1.25) {
   const def = PLATFORMS[type] || {};
-  return { type, x, y, w: type === 'ground' ? W - TOWER.wall * 2 : def.w * TOWER.widthScale, kind: type === 'ground' ? 'ground' : def.kind, slick: type === 'ac', floor, state: 'ok', t: 0, press: 0, ...extra };
+  return { type, x, y, w: type === 'ground' ? W - TOWER.wall * 2 : def.w * scale, kind: type === 'ground' ? 'ground' : def.kind, slick: type === 'ac', floor, state: 'ok', t: 0, press: 0, ...extra };
 }
 
-/** Build the whole tower. Deterministic for a seed. Returns { plats, mains (index = floor), coins }. */
-function buildTower(seed = TOWER.seed) {
-  const T = TOWER, rnd = towerRng(seed), [lo, hi] = towerBounds(), plats = [], mains = [], coins = [];
+/** Build the whole tower. Deterministic for a seed. o.top = number of floors, o.shift = tiers to start harder (the weekly tower). Returns { plats, mains (index = floor), coins, top }. */
+function buildTower(seed = TOWER.seed, o = {}) {
+  const T = TOWER, top = o.top || T.top, shift = o.shift || 0, rnd = towerRng(seed), [lo, hi] = towerBounds(), plats = [], mains = [], coins = [];
   const pad = w => [lo - 4 + w / 2, hi + 4 - w / 2];
-  for (let n = 0; n <= T.top; n++) {
+  for (let n = 0; n <= top; n++) {
     const y = -n * T.floorH, prev = mains[n - 1];
     if (n % T.checkEvery === 0) {
       const g = towerPlat('ground', W / 2, y, n, { check: n });
       mains.push(g); plats.push(g);
       continue;
     }
-    const type = towerPickType(rnd, n), probe = towerPlat(type, 0, y, n), [a, b] = pad(probe.w);
-    const reach = T.maxDx * (0.45 + 0.55 * Math.min(1, n / 60));
+    const tier = towerTierAt(n, shift), type = towerPickType(rnd, n, shift), probe = towerPlat(type, 0, y, n, {}, tier.scale), [a, b] = pad(probe.w);
+    const reach = T.maxDx * tier.reach, edgeNeed = Math.max(1, Math.ceil(tier.need / 5));
     let placed = null;
     for (let attempt = 0; attempt < 24 && !placed; attempt++) {
       const x = Math.max(a, Math.min(b, prev.x + (rnd() * 2 - 1) * reach * (attempt > 14 ? 0.5 : 1)));
       const cand = { ...probe, x };
-      const starts = prev.type === 'ground' ? [{ x, need: 5 }] : [{ x: prev.x, need: 5 }, { x: prev.x - prev.w / 3, need: 1 }, { x: prev.x + prev.w / 3, need: 1 }];
+      const starts = prev.type === 'ground' ? [{ x, need: tier.need }] : [{ x: prev.x, need: tier.need }, { x: prev.x - prev.w / 3, need: edgeNeed }, { x: prev.x + prev.w / 3, need: edgeNeed }];
       const maxPower = prev.kind === 'breakable' ? T.snapPower : 0;
       const ok = starts.every(s => towerSolve(Math.max(lo, Math.min(hi, s.x)), prev.y, cand, { dp: 0.04, da: 0.08, maxPower }).length >= s.need);
       if (ok) placed = cand;
@@ -114,26 +110,26 @@ function buildTower(seed = TOWER.seed) {
     mains.push(placed); plats.push(placed);
     if (rnd() < T.coinChance) coins.push({ x: placed.x, y: y - 36, got: false, ph: rnd() * 6 });
   }
-  for (let n = 1; n < T.top; n++) {
+  for (let n = 1; n < top; n++) {
     if (n % T.checkEvery === 0) continue;
-    const count = rnd() < T.secondCatch ? 2 : 1;
+    const count = rnd() < T.secondCatch ? 2 : 1, scale = towerTierAt(n, shift).scale;
     for (let k = 0; k < count; k++) {
-      const type = towerPickType(rnd, n), probe = towerPlat(type, 0, 0, 0), [a, b] = pad(probe.w);
+      const type = towerPickType(rnd, n, shift), probe = towerPlat(type, 0, 0, 0, {}, scale), [a, b] = pad(probe.w);
       let x = a + rnd() * (b - a), tries = 0;
       while (Math.abs(x - mains[n].x) < 90 && tries++ < 8) x = a + rnd() * (b - a);
-      const y = -(n - 0.5 - k * 0.25) * T.floorH, pl = towerPlat(type === 'minaret' || type === 'cloud' ? 'tank' : type, x, y, towerFloorOf(y), { side: true });
-      if (!towerKeepsPathOpen(mains, plats, pl)) continue;
+      const y = -(n - 0.5 - k * 0.25) * T.floorH, pl = towerPlat(type === 'minaret' || type === 'cloud' ? 'tank' : type, x, y, towerFloorOf(y), { side: true }, scale);
+      if (!towerKeepsPathOpen(mains, plats, pl, top)) continue;
       plats.push(pl);
       if (rnd() < T.catchCoin) coins.push({ x, y: y - 36, got: false, ph: rnd() * 6 });
     }
   }
-  return { plats, mains, coins };
+  return { plats, mains, coins, top };
 }
 
 /** A catch ledge may only stay if every main jump it could intercept still has solutions. */
-function towerKeepsPathOpen(mains, plats, pl) {
+function towerKeepsPathOpen(mains, plats, pl, top = TOWER.top) {
   const [lo, hi] = towerBounds(), T = TOWER, n = Math.round(-pl.y / T.floorH);
-  for (let m = Math.max(1, n - 2); m <= Math.min(T.top, n + 3); m++) {
+  for (let m = Math.max(1, n - 2); m <= Math.min(top, n + 3); m++) {
     const prev = mains[m - 1], cur = mains[m];
     const others = plats.concat(pl).filter(q => q !== cur && q.y > cur.y - T.floorH * 4 && q.y < prev.y + T.floorH);
     const x0 = prev.type === 'ground' ? cur.x : prev.x;
@@ -142,7 +138,8 @@ function towerKeepsPathOpen(mains, plats, pl) {
   return true;
 }
 
-let towerCache = null;
-const getTower = () => towerCache || (towerCache = buildTower());
+const towerCache = {};
+/** The built tower for a seed (cached). The default is the main Tower; the weekly one passes its own seed, floors and tier shift. */
+const getTower = (seed = TOWER.seed, o = {}) => towerCache[seed + ':' + (o.top || TOWER.top) + ':' + (o.shift || 0)] || (towerCache[seed + ':' + (o.top || TOWER.top) + ':' + (o.shift || 0)] = buildTower(seed, o));
 
 if (typeof module !== 'undefined' && module.exports) module.exports = { towerRng, towerLaunch, towerStep, towerSim, towerSolve, towerFloorOf, buildTower, getTower, towerMix, towerBounds };

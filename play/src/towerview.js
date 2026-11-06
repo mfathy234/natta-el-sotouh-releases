@@ -15,7 +15,7 @@ function renderTowerWalls(s) {
 }
 
 function renderTowerGround(s, pl, sy) {
-  const ctx = Eng.ctx, x0 = pl.x - pl.w / 2, reached = s.checkpoint >= pl.floor, top = pl.floor === TOWER.top;
+  const ctx = Eng.ctx, x0 = pl.x - pl.w / 2, reached = s.checkpoint >= pl.floor, top = pl.floor === s.top;
   ctx.save();
   ctx.fillStyle = K.wood; ctx.strokeStyle = K.ink; ctx.lineWidth = 3.5; ctx.lineJoin = 'round';
   ctx.beginPath(); ctx.roundRect(x0, sy, pl.w, 26, 6); ctx.fill(); ctx.stroke();
@@ -108,7 +108,10 @@ function renderTower(s) {
   renderTowerWalls(s);
   renderTowerPlats(s);
   renderPickups(s);
+  renderBawab(s);
   renderTowerAim(s);
   renderTowerHero(s);
   renderParts(s);
+  if (s.weekly) drawClock(s.over ? s.winT * 1000 : s.t * 1000);
+  renderBanners(s);
 }
