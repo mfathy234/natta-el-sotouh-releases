@@ -12,10 +12,12 @@ function frame(now) {
   const dt = Math.min(0.033, (now - lastTime) / 1000);
   lastTime = now;
   Eng.clock += dt;
+  Sound.sync(UI);
   beginFrame();
   if (UI.state === 'play' && UI.run) {
     updateRun(UI.run, dt);
     trackHint(UI.run, dt);
+    metaTick(UI.run);
     if (UI.run.tower) syncTower(UI.run);
     renderRun(UI.run);
     hudUpdate(UI.run);
@@ -37,7 +39,7 @@ async function boot() {
   initInput(() => UI.state === 'play');
   await loadSprites();
   document.querySelectorAll('[data-sprite]').forEach(img => { img.src = spriteSrc(img.dataset.sprite); });
-  $('menuHero').src = spriteSrc('hero:marei:slouch');
+  $('menuHero').src = spriteSrc('mood:calm:0');
   initUi();
   applyMute();
   Input.setMode(UI.save.controls);

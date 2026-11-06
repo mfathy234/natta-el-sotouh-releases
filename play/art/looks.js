@@ -52,7 +52,7 @@ const LOOK_ANCHORS = {
 const LOOK_FALL_DY = { marei: 0 };
 /* Head transform in the slouch pose (translate after rotate about cx, cy), and the body tilt for the neck. */
 const LOOK_SLOUCH = {
-  marei: { head: { tx: 10, ty: 12, rot: 12, cx: 60, cy: 52 }, neck: { tx: 18, ty: 6, rot: -24, cx: 68, cy: 92 } },
+  marei: { head: { tx: 22, ty: 0, rot: 8, cx: 60, cy: 52 }, neck: { tx: 18, ty: 6, rot: -24, cx: 68, cy: 92 } },
   crew: { head: { tx: 0, ty: 8, rot: -6, cx: 60, cy: 60 }, neck: { tx: 0, ty: 0, rot: -10, cx: 60, cy: 90 } }
 };
 

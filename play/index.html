@@ -34,9 +34,10 @@
   </section>
 
   <section class="screen" id="menu" aria-label="Main menu">
+    <button class="round album-round" type="button" id="btnAlbum"><img data-sprite="item:star:0" alt=""><b id="albumCount"></b></button>
     <div class="menu-col">
       <div class="logo">
-        <img class="logo-hero" id="menuHero" alt="Mar3y">
+        <div class="logo-art"><img class="logo-hero" id="menuHero" alt="Mar3y"><img class="mood-glass hidden" id="moodGlass" alt=""></div>
         <h1 class="title" data-t="title">نطّة السطوح</h1>
         <p class="latin">NATTA EL SOTOUH</p>
       </div>
@@ -71,8 +72,8 @@
       <button type="button" data-tab="look" data-t="tabLook"></button>
       <button type="button" data-tab="ups" data-t="tabUps"></button>
     </div>
+    <div class="shop-stage hidden" id="shopStage"></div>
     <div class="cards" id="heroList"></div>
-    <div class="look-stage hidden" id="lookStage"></div>
     <div class="cards" id="lookPane"></div>
     <div class="cards" id="upList"></div>
   </section>
@@ -82,6 +83,30 @@
     <h2 class="h2" data-t="daily"></h2>
     <div class="cards" id="dailyBody"></div>
     <button class="btn big" type="button" id="dailyStart"></button>
+  </section>
+
+  <section class="screen" id="album" aria-label="Album">
+    <div class="bar"><button class="btn small" type="button" id="albumBack" data-t="back"></button><div class="stat coin static"><img data-sprite="item:coin:0" alt=""><b id="albumCoins">٠</b></div></div>
+    <h2 class="h2" data-t="album"></h2>
+    <div class="tabs" id="albumTabs">
+      <button type="button" data-tab="album" data-t="albumTab"></button>
+      <button type="button" data-tab="ach" data-t="achTab"></button>
+    </div>
+    <div class="cards" id="albumBody"></div>
+    <button class="btn ghost" type="button" id="btnComicAgain" data-t="comicAgain"></button>
+  </section>
+
+  <section class="screen dim" id="comic" aria-label="Comic">
+    <div class="comic-frame" id="comicFrame">
+      <img class="comic-art" id="comicArt" alt="">
+      <div id="comicBubbles"></div>
+    </div>
+    <p class="comic-cap" id="comicCap"></p>
+    <div class="comic-dots" id="comicDots"></div>
+    <div class="row comic-btns">
+      <button class="btn ghost" type="button" id="comicSkip" data-t="comicSkip"></button>
+      <button class="btn big" type="button" id="comicNext"></button>
+    </div>
   </section>
 
   <section class="screen dim" id="pause" aria-label="Paused">
@@ -105,6 +130,7 @@
       <p class="status over-daily" id="overDaily"></p>
       <div class="over-missions" id="overMissions"></div>
       <button class="btn big" type="button" id="btnRetry" data-t="retry"></button>
+      <button class="btn" type="button" id="btnShare" data-t="share"></button>
       <div class="row">
         <button class="btn ghost" type="button" id="btnOverHeroes" data-t="shop"></button>
         <button class="btn ghost" type="button" id="btnOverMenu" data-t="menu"></button>
@@ -121,6 +147,7 @@
     </div>
   </section>
   <div id="runHint" class="hidden" aria-live="polite"><div class="hand-track"><svg class="hand" viewBox="0 0 40 48" aria-hidden="true"><path d="M14 22V8a4 4 0 0 1 8 0v12l12 3c3 .8 4 2.500 3.500 6l-2 12c-.5 3-2.500 5-5.500 5H18c-3 0-5-1.500-6.500-4L5 29c-1-2 1-4 3.500-3z" fill="#fff4ec" stroke="#2a1f3d" stroke-width="3" stroke-linejoin="round"/></svg></div><b id="runHintText"></b></div>
+  <div id="achToast" role="status" aria-live="polite"><img data-sprite="item:star:0" alt=""><div><small id="achToastHead"></small><b id="achToastName"></b><span id="achToastCap"></span></div></div>
   <p id="toast" role="status"></p>
 </div>
 <script src="art/core.js"></script>
@@ -133,11 +160,14 @@
 <script src="art/hadeel.js"></script>
 <script src="art/shawish.js"></script>
 <script src="art/looks.js"></script>
+<script src="art/mood.js"></script>
+<script src="art/comic.js"></script>
 <script src="art/platforms.js"></script>
 <script src="art/enemies.js"></script>
 <script src="art/items.js"></script>
 <script src="art/world.js"></script>
 <script src="art/sprites.js"></script>
+<script src="src/meta.js"></script>
 <script src="src/save.js"></script>
 <script src="src/shop.js"></script>
 <script src="src/daily.js"></script>
@@ -156,6 +186,11 @@
 <script src="src/towerview.js"></script>
 <script src="src/ui.js"></script>
 <script src="src/shopui.js"></script>
+<script src="src/shopstage.js"></script>
+<script src="src/share.js"></script>
+<script src="src/comicui.js"></script>
+<script src="src/albumui.js"></script>
+<script src="src/moods.js"></script>
 <script src="src/main.js"></script>
 </body>
 </html>

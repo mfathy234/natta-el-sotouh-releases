@@ -1,7 +1,7 @@
 /* Shop and daily challenge screens: the tabs (heroes, look, upgrades), the daily card with its missions,
    the shared confirm dialog, and the game-over extras. Rules live in shop.js and daily.js; this file only draws and wires. */
 
-const SHOP = { tab: 'heroes' };
+const SHOP = { tab: 'heroes', prev: null, tryLook: null };
 
 function el(tag, cls, text) {
   const n = document.createElement(tag);
@@ -26,7 +26,7 @@ function confirmBuy(name, price, kind, buy, after) {
   const up = kind === 'upgrade';
   askConfirm(t(up ? 'upgradeTitle' : 'buyTitle', name), t('buyBody', nf(price)), t(up ? 'upgradeBtn' : 'buyBtn', name, nf(price)), () => {
     const r = buy(UI.save, Date.now());
-    if (r.ok) { setSave(after ? after(r.save) : r.save); Sound.play('power'); }
+    if (r.ok) { SHOP.tryLook = null; setSave(after ? after(r.save) : r.save); Sound.play('power'); }
   });
 }
 
@@ -34,21 +34,29 @@ function confirmBuy(name, price, kind, buy, after) {
 function openHangar(from) {
   UI.hangarFrom = from;
   UI.state = from === 'over' ? 'over' : 'menu';
+  SHOP.prev = UI.save.hero;
+  SHOP.tryLook = null;
   showScreen('hangar');
   renderShop();
 }
 
 function renderShop() {
   $('hangarCoins').textContent = nf(UI.save.coins);
+  if (!SHOP.prev || (SHOP.tab === 'look' && SHOP.prev !== UI.save.hero)) SHOP.prev = UI.save.hero;
   $('shopTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tab === SHOP.tab));
   $('heroList').classList.toggle('hidden', SHOP.tab !== 'heroes');
   $('lookPane').classList.toggle('hidden', SHOP.tab !== 'look');
-  $('lookStage').classList.toggle('hidden', SHOP.tab !== 'look');
   $('upList').classList.toggle('hidden', SHOP.tab !== 'ups');
+  const live = { heroes: $('heroList'), look: $('lookPane'), ups: $('upList') }[SHOP.tab], keep = live.scrollTop;
   if (SHOP.tab === 'heroes') renderHeroes();
   else if (SHOP.tab === 'look') renderLook();
   else renderUpgrades();
+  stageRender();
+  live.scrollTop = keep;
 }
+
+/** Tapping a card (not its button) previews it in the pinned stage. */
+const onCardTap = fn => e => { if (!e.target.closest('button')) { Sound.play('click'); fn(); renderShop(); } };
 
 function priceButton(price, onclick, affordable) {
   const b = el('button', 'btn small' + (affordable ? '' : ' poor'), nf(price));
@@ -62,7 +70,8 @@ function renderHeroes() {
   list.textContent = '';
   HEROES.forEach(h => {
     const held = UI.save.owned.includes(h.id), owned = heroFlies(UI.save, h.id), current = UI.save.hero === h.id;
-    const card = el('div', 'card' + (current ? ' current' : '') + (owned ? '' : ' locked'));
+    const card = el('div', 'card tappable' + (current ? ' current' : '') + (SHOP.prev === h.id ? ' trying' : '') + (owned ? '' : ' locked'));
+    card.onclick = onCardTap(() => { SHOP.prev = h.id; });
     const info = el('div', 'info');
     info.append(el('span', 'name', pick(h)), el('span', 'bio', pick(h.bio)));
     if (h.perk.id !== 'none') info.appendChild(el('span', 'perk', t('perk', pick(h.perk))));
@@ -71,7 +80,7 @@ function renderHeroes() {
     card.append(heroView(h.id, 'slouch', wornOf(UI.save, h.id)), info);
     let btn;
     if (current) { btn = el('button', 'btn small', t('current')); btn.disabled = true; }
-    else if (owned) { btn = el('button', 'btn small', t('choose')); btn.onclick = () => { Sound.play('click'); setSave(selectHero(UI.save, h.id)); renderShop(); }; }
+    else if (owned) { btn = el('button', 'btn small', t('choose')); btn.onclick = () => { Sound.play('click'); SHOP.prev = h.id; setSave(selectHero(UI.save, h.id)); renderShop(); }; }
     else btn = priceButton(h.price, () => askBuyHero(h), UI.save.coins >= h.price);
     btn.type = 'button';
     card.appendChild(btn);
@@ -89,25 +98,12 @@ function askBuyHero(h) {
 }
 
 function renderLook() {
-  const pane = $('lookPane'), stage = $('lookStage'), hero = HEROES.find(h => h.id === UI.save.hero), worn = wornOf(UI.save, hero.id);
+  const pane = $('lookPane'), hero = HEROES.find(h => h.id === UI.save.hero), worn = wornOf(UI.save, hero.id);
   pane.textContent = '';
-  stage.textContent = '';
-  stage.appendChild(heroView(hero.id, 'slouch', worn, 'big'));
-  const wearing = LOOK_SLOTS.map(sl => LOOKS.find(l => l.id === worn[sl])).filter(Boolean).map(pick).join(' · ');
-  stage.append(el('span', 'name', pick(hero)), el('span', 'req', wearing ? t('wearing', wearing) : t('wearsNothing')));
-  const chips = el('div', 'chips');
-  HEROES.filter(h => heroFlies(UI.save, h.id)).map(h => h.id).forEach(id => {
-    const b = el('button', 'chip-btn' + (id === hero.id ? ' on' : ''));
-    b.type = 'button';
-    b.setAttribute('aria-label', pick(HEROES.find(h => h.id === id)));
-    b.appendChild(heroView(id, 'idle', wornOf(UI.save, id)));
-    b.onclick = () => { Sound.play('click'); setSave(selectHero(UI.save, id)); renderShop(); };
-    chips.appendChild(b);
-  });
-  stage.appendChild(chips);
   LOOKS.forEach(l => {
-    const owned = ownsLook(UI.save, l.id), on = worn[l.slot] === l.id;
-    const card = el('div', 'card' + (on ? ' current' : '') + (owned ? '' : ' locked'));
+    const owned = ownsLook(UI.save, l.id), on = worn[l.slot] === l.id, trying = SHOP.tryLook === l.id;
+    const card = el('div', 'card tappable' + (on ? ' current' : '') + (trying ? ' trying' : '') + (owned ? '' : ' locked'));
+    card.onclick = onCardTap(() => { SHOP.tryLook = on || trying ? null : l.id; });
     const icon = el('img', 'look-icon');
     icon.src = spriteSrc(`look:${l.id}`);
     icon.alt = '';
@@ -117,8 +113,8 @@ function renderLook() {
     card.append(icon, info);
     let btn;
     if (!owned) btn = priceButton(l.price, () => askBuyLook(l), UI.save.coins >= l.price);
-    else if (on) { btn = el('button', 'btn small', t('takeOff')); btn.onclick = () => { Sound.play('click'); setSave(takeOffLook(UI.save, hero.id, l.slot)); renderShop(); }; }
-    else { btn = el('button', 'btn small', t('wear')); btn.onclick = () => { Sound.play('click'); setSave(wearLook(UI.save, hero.id, l.id)); renderShop(); }; }
+    else if (on) { btn = el('button', 'btn small', t('takeOff')); btn.onclick = () => { Sound.play('click'); SHOP.tryLook = null; setSave(takeOffLook(UI.save, hero.id, l.slot)); renderShop(); }; }
+    else { btn = el('button', 'btn small', t('wear')); btn.onclick = () => { Sound.play('click'); SHOP.tryLook = null; setSave(wearLook(UI.save, hero.id, l.id)); renderShop(); }; }
     btn.type = 'button';
     card.appendChild(btn);
     pane.appendChild(card);

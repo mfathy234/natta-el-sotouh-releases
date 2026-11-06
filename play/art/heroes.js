@@ -74,12 +74,24 @@ function mareiEye(cx, cy, iris, wide) {
   return base + `<path d="M${cx - rx - 1.5} ${cy + 1} A${rx + 1.5} ${ry + 1.5} 0 0 1 ${cx + rx + 1.5} ${cy + 1} Z" fill="${MAREI.fur}" stroke="${K.ink}" stroke-width="3" stroke-linejoin="round"/>`;
 }
 
+/* Eye shapes for the mood faces: closed (blink, yawn, sleep) and happy-closed (proud). */
+const mareiClosed = (cx, cy) => `<path d="M${cx - 10} ${cy} Q${cx} ${cy + 9} ${cx + 10} ${cy}" fill="none" ${S(3.2)}/>`;
+const mareiHappy = (cx, cy) => `<path d="M${cx - 10} ${cy + 4} Q${cx} ${cy - 8} ${cx + 10} ${cy + 4}" fill="none" ${S(3.2)}/>`;
+const MAREI_MOODS = {
+  blink: { eye: mareiClosed, mouth: `<path d="M55 57 H65" fill="none" ${S(2.8)}/>` },
+  sleepy: { eye: mareiClosed, mouth: `<path d="M57 57 Q60 59 63 57" fill="none" ${S(2.6)}/>` },
+  yawn: { eye: mareiClosed, mouth: `<ellipse cx="60" cy="60" rx="6.5" ry="8.5" fill="#7a1a1a" ${S(2.6)}/><ellipse cx="60" cy="65" rx="4" ry="2.8" fill="${K.pink}"/>` },
+  proud: { eye: mareiHappy, mouth: `<path d="M50 55 Q58 64 62 58 Q66 56 71 50" fill="none" ${S(2.8)}/>` }
+};
+
 function mareiFace(mode, turn) {
-  const wide = mode === 'wide';
-  const mouthD = wide ? `<ellipse cx="60" cy="59" rx="3.6" ry="4.6" fill="#7a1a1a" ${S(2.5)}/>`
+  const wide = mode === 'wide', mood = MAREI_MOODS[mode];
+  const mouthD = mood ? mood.mouth : wide ? `<ellipse cx="60" cy="59" rx="3.6" ry="4.6" fill="#7a1a1a" ${S(2.5)}/>`
     : mode === 'smug' ? `<path d="M52 56 Q58 61 62 57 Q66 56 70 52" fill="none" ${S(2.8)}/>`
+    : mode === 'meh' ? `<path d="M54 60 Q60 55 66 60" fill="none" ${S(2.8)}/>`
     : `<path d="M55 57 H65" fill="none" ${S(2.8)}/>`;
-  return `<g transform="translate(${turn} 0)">` + mareiEye(45, 40, MAREI.amber, wide) + mareiEye(75, 40, MAREI.blue, wide) +
+  const eyes = mood ? mood.eye(45, 40) + mood.eye(75, 40) : mareiEye(45, 40, MAREI.amber, wide) + mareiEye(75, 40, MAREI.blue, wide);
+  return `<g transform="translate(${turn} 0)">` + eyes +
     `<path d="M55 49 L65 49 L60 56Z" fill="${K.pink}" ${S(2.5)}/>` + mouthD +
     `<path d="M32 50 L10 45 M32 55 L10 58 M88 50 L110 45 M88 55 L110 58" stroke="${K.ink}" stroke-width="2" stroke-linecap="round"/></g>`;
 }
@@ -109,16 +121,23 @@ const MAREI_STAND = {
 /* Couch slouch (from the photo): a 3/4 view leaning back against a cushion on the right, torso tilted back, legs stretched out
    to the left and crossed at the paws, one front paw resting on the belly, the other lying along his side, head turned
    with the half-lidded look, fluffy tail trailing out behind. */
-function mareiSlouch() {
+/* o.mode: face; o.arms: 'rest' (default), 'lick' (paw to the mouth, o.lick 0 or 1), 'stretch' (both paws up), 'knock' (side paw out to the right, o.reach 0 or 1). */
+function mareiSlouch(o = {}) {
   const cushion = `<path d="M92 30 Q114 22 124 40 L126 112 Q108 124 92 118Z" fill="${K.tealLight}" ${S(4)}/><circle cx="110" cy="76" r="3.2" fill="${K.teal}" stroke="${K.ink}" stroke-width="2"/><path d="M100 40 Q112 36 120 44" stroke="${K.white}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".6"/>`;
   const torso = `<g transform="translate(26 -2) rotate(17 60 84)">${mareiBody()}${mareiChest()}</g>`;
+  const arms = o.arms || 'rest', head = `<g transform="translate(88 36) scale(.8) translate(-60 -42)">${mareiHead(o.mode || 'calm', 6, -9)}</g>`;
+  const sideArm = arms === 'knock' ? mareiLimb(`M92 64 Q${o.reach ? 122 : 116} ${o.reach ? 60 : 50} ${o.reach ? 148 : 140} ${o.reach ? 66 : 52}`) + mareiPaw(o.reach ? 151 : 143, o.reach ? 67 : 53, true, 90)
+    : arms === 'stretch' ? mareiLimb('M100 62 Q104 34 84 12') + mareiPaw(83, 9, true, 200)
+    : mareiLimb('M100 62 Q108 84 100 106') + mareiPaw(100, 109, false, 0);
+  const frontArm = arms === 'lick' ? `<ellipse cx="${o.lick ? 74 : 77}" cy="52" rx="3" ry="2.2" fill="${K.pink}" ${S(1.4)}/>` + mareiLimb('M86 62 Q92 58 84 52', 5) + mareiPaw(o.lick ? 82 : 85, o.lick ? 51 : 53, false, -20)
+    : arms === 'stretch' ? mareiLimb('M86 62 Q60 40 46 20') + mareiPaw(45, 17, true, 200)
+    : mareiLimb('M86 62 Q70 70 74 84') + mareiPaw(76, 86, false, 40);
   return cushion + bushyTail([92, 100, 70, 84, 44, 84, 8, 66], MAREI.fur, 9) +
     mareiLimb('M82 92 Q54 104 26 120') + mareiPaw(23, 121, true, 60) +
     torso +
     mareiLimb('M84 100 Q54 96 18 106') + mareiPaw(14, 105, true, 100) +
-    mareiLimb('M100 62 Q108 84 100 106') + mareiPaw(100, 109, false, 0) +
-    `<g transform="translate(88 36) scale(.8) translate(-60 -42)">${mareiHead('calm', 6, -9)}</g>` +
-    mareiLimb('M86 62 Q70 70 74 84') + mareiPaw(76, 86, false, 40);
+    (arms === 'knock' || arms === 'stretch' ? sideArm : mareiLimb('M100 62 Q108 84 100 106') + mareiPaw(100, 109, false, 0)) +
+    (arms === 'stretch' ? frontArm + head : head + (arms === 'knock' ? mareiLimb('M86 62 Q70 70 74 84') + mareiPaw(76, 86, false, 40) : frontArm));
 }
 
 function mareiArt(pose = 'idle') {

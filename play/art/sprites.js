@@ -12,6 +12,8 @@ function spriteCatalogue() {
   Object.keys(PLATFORM_ART).forEach(t => PLATFORM_ART[t].forEach((fr, i) => add(`plat:${t}:${i}`, PLAT_VB, 64, 24, fr())));
   Object.keys(ENEMY_ART).forEach(t => (t === 'slipper' ? [0] : [0, 1]).forEach(f => add(`enemy:${t}:${f}`, ENEMY_VB, ENEMY_SIZE[t], ENEMY_SIZE[t], ENEMY_ART[t](f))));
   Object.keys(ITEM_ART).forEach(t => ITEM_ART[t].forEach((fr, i) => add(`item:${t}:${i}`, ITEM_VB, ITEM_SIZE[t], ITEM_SIZE[t], fr())));
+  MOOD_NAMES.forEach(n => add(`mood:${n}:0`, MOOD_VB, MOOD_SIZE.w, MOOD_SIZE.h, MOOD_FRAMES[n]()));
+  add('mood:glass:0', GLASS_VB, 24, 28, teaGlassArt());
   add('bg:facade', '0 0 360 320', 360, 320, facadeArt());
   add('bg:skyline', '0 0 360 220', 360, 220, skylineArt());
   add('bg:rooftops', '0 0 360 200', 360, 200, rooftopsArt());

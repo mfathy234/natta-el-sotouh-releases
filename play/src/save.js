@@ -1,6 +1,8 @@
 /* Save model: pure and immutable. Every function returns a new save; storage adapters are at the bottom.
    Shop (looks, upgrades) rules are in shop.js; the daily challenge and missions are in daily.js. */
 
+if (typeof module !== 'undefined' && module.exports && typeof sanitizeMeta === 'undefined') Object.assign(global, require('./meta.js'));
+
 const SAVE_VERSION = 2;
 const FREE_HEROES = ['marei'];
 const HOUR_MS = 3600 * 1000;
@@ -18,7 +20,7 @@ function newMissions() { return { date: '', prog: {}, done: [] }; }
 function newSave(now = 0) {
   return {
     v: SAVE_VERSION, createdAt: now, updatedAt: now, hero: DEFAULT_HERO, owned: [...FREE_HEROES], best: 0, coins: 0, runs: 0, lang: 'ar', muted: false, controls: DEFAULT_CONTROLS, hintSeen: false,
-    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions(), mode: 'free', tower: newTowerSave(), passUntil: 0
+    looks: [], worn: {}, ups: { shield: 0, kite: 0, magnet: 0 }, boost: { double: false }, daily: newDaily(), missions: newMissions(), mode: 'free', tower: newTowerSave(), passUntil: 0, meta: newMeta()
   };
 }
 
@@ -80,7 +82,8 @@ function sanitizeSave(raw, now = Date.now()) {
     missions: sanitizeMissions(raw.missions),
     mode: raw.mode === 'tower' ? 'tower' : 'free',
     tower: sanitizeTower(raw.tower),
-    passUntil
+    passUntil,
+    meta: sanitizeMeta(raw.meta)
   };
 }
 

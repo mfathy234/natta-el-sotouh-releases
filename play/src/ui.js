@@ -4,9 +4,9 @@
 const $ = id => document.getElementById(id);
 const UI = { save: null, state: 'splash', run: null, demo: null, confirmYes: null, debugMeters: 0 };
 
-function setSave(next) { UI.save = next; persistSave(window.localStorage, next); }
+function setSave(next) { UI.save = next; persistSave(window.localStorage, next); metaAfterSave(); }
 
-const SCREENS = ['menu', 'hangar', 'daily', 'pause', 'over', 'confirm', 'splash'];
+const SCREENS = ['menu', 'hangar', 'daily', 'album', 'comic', 'pause', 'over', 'confirm', 'splash'];
 function showScreen(name) {
   SCREENS.forEach(id => $(id).classList.toggle('show', id === name));
   $('hud').classList.toggle('hidden', UI.state !== 'play' && UI.state !== 'pause');
@@ -44,10 +44,14 @@ function refreshText() {
   $('muteImg').src = spriteSrc(UI.save.muted ? 'item:soundOff:0' : 'item:soundOn:0');
   $('muteBtn').setAttribute('aria-label', t('mute'));
   $('pauseBtn').setAttribute('aria-label', t('pause'));
+  $('btnAlbum').setAttribute('aria-label', t('album'));
   $('uHeight').textContent = t(UI.run && UI.run.tower ? 'floorU' : 'm');
   refreshModeUi();
   if ($('hangar').classList.contains('show')) renderShop();
   if ($('daily').classList.contains('show')) renderDaily();
+  if ($('album').classList.contains('show')) renderAlbum();
+  if ($('comic').classList.contains('show')) renderComic();
+  refreshAlbumCount();
 }
 
 const coarsePointer = () => Boolean(window.matchMedia && matchMedia('(pointer: coarse)').matches);
@@ -113,8 +117,10 @@ function goMenu() {
   UI.state = 'menu';
   UI.run = null;
   UI.demo = newRun({ demo: true, hero: UI.save.hero });
+  if (needComic()) { openComic(); return; }
   showScreen('menu');
   refreshText();
+  moodEnter();
 }
 
 function startGame(daily = false) {
@@ -122,6 +128,8 @@ function startGame(daily = false) {
   Sound.play('click');
   const key = dateKey(), loadout = runLoadout(UI.save), hero = UI.save.hero;
   UI.mode = daily === true ? 'daily' : 'normal';
+  UI.hazards = new Set();
+  UI.towerBestAtStart = UI.save.tower.best;
   if (UI.mode === 'normal' && UI.save.mode === 'tower') UI.run = newTower({ hero, startFloor: towerStartFloor() });
   else {
     setSave(consumeBoost(UI.save));
@@ -129,6 +137,7 @@ function startGame(daily = false) {
   }
   UI.demo = null;
   UI.state = 'play';
+  Sound.voice('jump');
   Input.reset();
   Input.calibrate();
   if (UI.save.controls === 'tilt' && !Input.tiltOn) enableTilt().then(ok => { if (!ok) toast(t('tiltDenied')); });
@@ -179,7 +188,9 @@ function syncTower(s) {
 function bankTower(s) {
   if (s.banked) return;
   s.banked = true;
-  setSave(recordTower(UI.save, { floor: s.maxFloor, coins: s.coinsGot, won: s.won }, Date.now()));
+  const next = recordTower(UI.save, { floor: s.maxFloor, coins: s.coinsGot, won: s.won }, Date.now()), newBest = s.maxFloor > UI.towerBestAtStart;
+  setSave(foldRunMeta(next, runMetaInfo(s, 'tower', newBest), Date.now()));
+  UI.last = { hero: UI.save.hero, worn: wornOf(UI.save, UI.save.hero), kind: 'tower', value: s.maxFloor, newBest, line: shareLine('tower', s.maxFloor, newBest) };
 }
 function finishTower() {
   const s = UI.run;
@@ -190,7 +201,8 @@ function finishTower() {
   $('overCoins').textContent = nf(s.coinsGot);
   $('overBest').classList.add('hidden');
   $('overBestLine').textContent = t('towerLine', nf(UI.save.tower.best), nf(towerStartFloor()));
-  $('overHero').src = spriteSrc(`hero:${UI.save.hero}:slouch`);
+  $('overHeroBox').replaceChildren(heroView(UI.save.hero, 'slouch', wornOf(UI.save, UI.save.hero), 'over-hero'));
+  Sound.voice(s.won ? 'roof' : 'ground');
   showScreen('over');
 }
 
@@ -198,18 +210,20 @@ function finishRun() {
   if (UI.run.tower) return finishTower();
   const s = UI.run, meters = s.meters, total = score(s), prevBest = UI.save.best;
   const before = UI.save.owned;
-  const res = settleRun(UI.save, s, Date.now());
-  setSave(res.save);
+  const res = settleRun(UI.save, s, Date.now()), kind = s.daily ? 'daily' : 'free', newBest = !s.daily && meters > prevBest && meters > 0;
+  setSave(foldRunMeta(res.save, runMetaInfo(s, kind, newBest), Date.now()));
+  UI.last = { hero: UI.save.hero, worn: wornOf(UI.save, UI.save.hero), kind, value: meters, newBest, line: shareLine(kind, meters, newBest) };
   UI.state = 'over';
   const line = FALL_LINES[Math.floor(Math.random() * FALL_LINES.length)];
   $('overTitle').textContent = pick(line);
   $('overHeight').textContent = nf(meters) + ' ' + t('m');
   $('overCoins').textContent = nf(s.coinsGot);
-  $('overBest').classList.toggle('hidden', !(meters > prevBest && meters > 0));
+  $('overBest').classList.toggle('hidden', !newBest);
   $('overBestLine').textContent = t('bestIs', nf(UI.save.best) + ' ' + t('m'));
   $('overHeroBox').replaceChildren(heroView(UI.save.hero, 'slouch', wornOf(UI.save, UI.save.hero), 'over-hero'));
   showRunExtras(res);
   showScreen('over');
+  if (meters > prevBest && meters > 0) { Sound.play('best'); Sound.voice('ash'); }
   refreshText();
   $('overBestLine').textContent = t('bestIs', nf(UI.save.best) + ' ' + t('m'));
   const fresh = UI.save.owned.filter(id => !before.includes(id));
@@ -242,7 +256,7 @@ function initUi() {
   setInterval(() => { if (UI.state !== 'play' && UI.state !== 'pause' && UI.state !== 'splash') { if (!settleNow()) refreshPass(); } }, 15000);
   $('btnHeroes').onclick = () => { Sound.start(); Sound.play('click'); openHangar('menu'); };
   $('btnControls').onclick = () => { Sound.start(); Sound.play('click'); cycleControls(); };
-  $('shopTabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) { Sound.play('click'); SHOP.tab = b.dataset.tab; ['heroList', 'lookPane', 'upList'].forEach(id => { $(id).scrollTop = 0; }); renderShop(); } };
+  $('shopTabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) { Sound.play('click'); SHOP.tab = b.dataset.tab; SHOP.tryLook = null; SHOP.prev = UI.save.hero; ['heroList', 'lookPane', 'upList'].forEach(id => { $(id).scrollTop = 0; }); renderShop(); } };
   $('btnLang').onclick = () => { Sound.start(); Sound.play('click'); setSave(setSetting(UI.save, 'lang', UI.save.lang === 'ar' ? 'en' : 'ar')); applyLang(); };
   $('muteBtn').onclick = () => { Sound.start(); toggleMute(); };
   $('pauseBtn').onclick = pauseGame;
@@ -253,6 +267,10 @@ function initUi() {
   $('btnRetry').onclick = () => startGame(UI.mode === 'daily');
   $('btnOverHeroes').onclick = () => openHangar('over');
   $('btnOverMenu').onclick = goMenu;
+  $('btnShare').onclick = () => { Sound.play('click'); shareLastRun(); };
+  initComicUi();
+  initAlbumUi();
+  initMoods();
   $('hangarBack').onclick = () => { Sound.play('click'); if (UI.hangarFrom === 'over') { UI.state = 'over'; showScreen('over'); } else goMenu(); };
   $('confirmYes').onclick = () => { if (UI.confirmYes) UI.confirmYes(); };
   $('confirmNo').onclick = closeConfirm;
