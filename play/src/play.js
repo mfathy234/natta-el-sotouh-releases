@@ -30,7 +30,7 @@ const dxWrap = (a, b) => { let d = a - b; if (d > W / 2) d -= W; if (d < -W / 2)
 function puff(s, x, y, n = 5, spread = 40, kind = 'puff') {
   for (let i = 0; i < n; i++) s.parts.push({ kind, x: x + rand(-spread / 2, spread / 2), y, vx: rand(-40, 40), vy: rand(-50, -10), r: rand(4, 8), t: 0, life: rand(0.45, 0.75) });
 }
-const pop = (s, text, x, y, color) => s.pops.push({ text, x, y, t: 0, color });
+const pop = (s, text, x, y, color) => popPush(s, text, x, y, color);
 
 function launch(s, power, sound) {
   const p = s.p;
@@ -62,12 +62,12 @@ function killEnemy(s, e, stomp) {
   e.dead = true;
   puff(s, e.x, e.y, 7, 30, 'puff');
   if (stomp) {
-    s.bonus += 10; pop(s, '+' + nf(10), e.x, e.y - 20, K.gold); Sound.play('stomp');
+    s.bonus += 10; popGain(s, 10, e.x, e.y - 24, K.gold); Sound.play('stomp');
     comboHit(s, 'stomp');
     if (e.type === 'pigeon') {
       s.stats.pigeons += 1;
       const extra = s.twist && s.twist.stompCoins;
-      if (extra) { s.coinsGot += extra * s.coinMult; s.stats.coins += extra; pop(s, '+' + nf(extra * s.coinMult), e.x, e.y - 44, K.gold); }
+      if (extra) { s.coinsGot += extra * s.coinMult; s.stats.coins += extra; popGain(s, extra * s.coinMult, e.x, e.y - 24, K.gold); }
     }
   }
 }
@@ -215,7 +215,8 @@ function updatePickups(s) {
     const dx = dxWrap(p.x, c.x), dy = p.y - c.y, d = Math.hypot(dx, dy);
     if (!c.got && s.magR > 0 && d < s.magR && d > 1 && !p.dead) { const pull = Math.min(d, (200 + 320 * (1 - d / (s.magR + 30))) * (s.dt || 0.016)); c.x = wrapX(c.x + (dx / d) * pull); c.y += (dy / d) * pull; }
     if (!c.got && d < 26) {
-      c.got = true; s.coinsGot += s.coinMult; s.stats.coins += 1; Sound.play('coin');
+      const val = c.cone ? EVENTS.icecream.coins : 1;
+      c.got = true; s.coinsGot += s.coinMult * val; s.stats.coins += val; Sound.play('coin');
       comboHit(s, 'coin');
       puff(s, c.x, c.y, 4, 14, 'spark');
     }
@@ -238,14 +239,14 @@ function updateFx(s, dt) {
   s.parts.forEach(q => { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.kind === 'drop') q.vy += 600 * dt; });
   s.parts = s.parts.filter(q => q.t < q.life);
   s.pops.forEach(q => { q.t += dt; });
-  s.pops = s.pops.filter(q => q.t < 1.3);
+  const life = noteCfg().popLife;
+  s.pops = s.pops.filter(q => q.t < life);
 }
 
 /** Advance the run by dt seconds. Returns nothing; read s.over / s.ended afterwards. */
 function updateRun(s, dt) {
   if (s.tower) { updateTower(s, dt); return; }
   if (s.slowT > 0) { s.slowT -= dt; dt *= FEEL.slowScale; }
-  dt *= eventTimeScale(s);
   s.t += dt;
   s.dt = dt;
   updatePlayer(s, dt);
@@ -265,7 +266,7 @@ function updateRun(s, dt) {
     updateNeighbours(s, dt);
     updateCombo(s, dt);
     ghostTick(s, dt);
-    if (s.daily && !s.targetHit && s.meters >= s.target) { s.targetHit = true; if (typeof showPop === 'function') showPop(t('targetHit')); Sound.play('mile'); }
+    if (s.daily && !s.targetHit && s.meters >= s.target) { s.targetHit = true; if (typeof showPop === 'function') showPop(t('targetHit'), true); Sound.play('mile'); }
     const ms = MILESTONES[s.milestone];
     if (ms && s.meters >= ms.m) { s.milestone++; if (typeof showPop === 'function') showPop(pick(ms)); Sound.play('mile'); }
     if (!s.over && p.y - s.cam > H + 60) { s.over = true; s.overT = 0; Sound.play('over'); }

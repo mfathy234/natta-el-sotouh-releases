@@ -75,7 +75,7 @@ function ghostTick(s, dt) {
   if (gh > s.maxUp + 40) s.ghostBehind = true;
   if (s.maxUp > gh + 10 && (s.ghostBehind || g.ended) && s.t > 2) {
     s.ghostPassed = true;
-    bannerPush(s, GHOST.line, 'event');
+    bannerPush(s, GHOST.line, 'minor');
     Sound.play('mile');
     for (let i = 0; i < 8; i++) s.parts.push({ kind: 'spark', x: s.p.x + rand(-20, 20), y: s.p.y, vx: rand(-90, 90), vy: rand(-120, -20), r: rand(3, 6), t: 0, life: rand(0.5, 0.9) });
   }

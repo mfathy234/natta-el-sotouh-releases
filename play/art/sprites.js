@@ -20,6 +20,7 @@ function spriteCatalogue() {
     add(`nbr:bucket:${f}`, NBR_BUCKET_VB, 84, 70, nbrBucketArt(f));
     add(`nbr:splash:${f}`, NBR_SPLASH_VB, 74, 50, nbrSplashArt(f));
     add(`event:rocket:${f}`, ROCKET_VB, 34, 54, rocketArt(f));
+    add(`event:cart:${f}`, CART_VB, 76, 66, iceCreamCartArt(f));
   });
   [0, 1, 'throw', 'beat'].forEach(p => add(`bawab:${p}`, BAWAB_VB, 92, 92, bawabArt(p)));
   add('enemy:key:0', ENEMY_VB, 30, 30, keyArt());

@@ -69,6 +69,7 @@ function renderPickups(s) {
     const sy = c.y - s.cam;
     if (sy < -30 || sy > H + 30) return;
     const k = beatBounce(c.ph, 0.1);
+    if (c.cone) { drawSpr('item:cone:0', c.x, sy, { w: 34, h: 34, rot: Math.sin(Eng.clock * 3 + c.ph * 5) * 0.12, sx: 1 + (k - 1) * 0.5, sy: 1 + (1 - k) * 0.5 }); return; }
     drawSpr(`item:coin:${animFrame(c.ph * 0.1)}`, c.x, sy, { sx: k, sy: k });
   });
   s.pows.forEach(w => {
@@ -170,7 +171,8 @@ function renderParts(s) {
     else { ctx.fillStyle = K.tealLight; ctx.beginPath(); ctx.ellipse(q.x, sy, q.r * 0.8, q.r * 1.3, 0, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore();
   });
-  s.pops.forEach(q => drawText(q.text, clamp(q.x, 40, W - 40), q.y - s.cam - q.t * 40, 20, q.color, { alpha: 1 - Math.max(0, q.t - 0.8) / 0.5 }));
+  const cfg = noteCfg();
+  s.pops.forEach(q => drawText(q.text, clamp(q.x, 40, W - 40), q.y - s.cam - Math.min(q.t, 0.6) * cfg.popRise, cfg.popSize, q.color, { alpha: clamp((cfg.popLife - q.t) / 0.35, 0, 1) }));
 }
 
 function renderRun(s) {

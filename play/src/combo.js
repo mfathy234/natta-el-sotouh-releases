@@ -20,7 +20,7 @@ function comboHit(s, kind) {
   const extra = Math.round((COMBO.points[kind] || 0) * (c.mult - 1));
   if (extra > 0) s.bonus += extra;
   const hit = COMBO.steps.find(st => st.n === c.n);
-  if (hit) { bannerPush(s, { ar: hit.ar, en: hit.en }, 'shout'); Sound.play('mile'); }
+  if (hit && !(hit.quiet && noteCfg().quiet) && bannerPush(s, { ar: hit.ar, en: hit.en }, 'shout')) Sound.play('mile');
 }
 
 function updateCombo(s, dt) {

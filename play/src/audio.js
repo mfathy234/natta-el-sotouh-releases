@@ -231,7 +231,7 @@ const Sound = {
     const v = this.VOICES[id];
     if (this.muted || !this.vol.voices || !this.ctx || !v || !this.bufs[v.file]) return false;
     const now = this.ctx.currentTime, len = this.bufs[v.file].duration;
-    if (now < this.voiceUntil || now - this.voiceLast < 1.2) return false;
+    if (now < this.voiceUntil || now - this.voiceLast < (typeof barkGap === 'function' ? barkGap() : 3)) return false;
     this.voiceLast = now;
     this.voiceUntil = now + len;
     this.buffer(v.file, this.voiceBus);

@@ -1,10 +1,10 @@
 /* Layout is in em: the stage sets font-size = 16 logical px * scale, so 1em is 16 px of the 360 x 640 stage. */
-@font-face { font-family: Lalezar; src: url(fonts/lalezar-arabic-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; font-display: swap; }
-@font-face { font-family: Lalezar; src: url(fonts/lalezar-latin-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-arabic-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-arabic-700-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-latin-400-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
-@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-latin-700-normal.woff2?v=4b9b2753898f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
+@font-face { font-family: Lalezar; src: url(fonts/lalezar-arabic-400-normal.woff2?v=6e022bbc846f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; font-display: swap; }
+@font-face { font-family: Lalezar; src: url(fonts/lalezar-latin-400-normal.woff2?v=6e022bbc846f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-arabic-400-normal.woff2?v=6e022bbc846f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-arabic-700-normal.woff2?v=6e022bbc846f) format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 400; src: url(fonts/cairo-latin-400-normal.woff2?v=6e022bbc846f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
+@font-face { font-family: Cairo; font-weight: 700; src: url(fonts/cairo-latin-700-normal.woff2?v=6e022bbc846f) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; font-display: swap; }
 
 :root { --ink: #2a1f3d; --paper: #fff4ec; --white: #fffaf6; --gold: #ffd23f; --goldDark: #c99700; --goldText: #7a5600; --coral: #e85d75; --coralDark: #b53a58; --red: #d63a2f; --mint: #2fbfa6; --mintDark: #1f8f7c; --mintText: #0d6b5a; --mintLight: #d4f4ec; --lemonLight: #fff0b8; --teal: #2fbfa6; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }

@@ -133,6 +133,7 @@ function renderSettings() {
   rows.push(setRow(t('set_controls'), setSegments('pref_controls', availableModes().map(m => ({ value: m, text: t('ctrl_' + m) })), UI.save.controls, setControlsMode)));
   rows.push(setRow(t('set_ghost'), setSwitch('pref_ghost', UI.save.ghost !== false, v => { setSave(setSetting(UI.save, 'ghost', v)); })));
   rows.push(setRow(t('set_calm'), setSwitch('pref_calm', p.calm, v => changePref('calm', v))));
+  rows.push(setRow(t('set_quiet'), setSwitch('pref_quiet', p.quiet, v => changePref('quiet', v))));
   rows.push(setRow(t('set_lang'), setSegments('pref_lang', [{ value: 'ar', text: 'عربي' }, { value: 'en', text: 'English' }], UI.save.lang, v => { setSave(setSetting(UI.save, 'lang', v)); applyLang(); })));
   rows.push(setHeading(t('set_story')));
   if (!inRun) rows.push(setAction('btnSetComic', t('set_comic'), '', () => { Sound.play('click'); openComic(() => { UI.state = 'menu'; openSettings('menu'); }); }));

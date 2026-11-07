@@ -142,6 +142,7 @@ const STR = {
   set_lang: ['اللغة', 'Language'],
   set_ghost: ['شبح أحسن جولة', 'Best-run ghost'],
   set_calm: ['تقليل الحركة', 'Reduce motion'],
+  set_quiet: ['إشعارات أقل', 'Fewer pop-ups'],
   set_story: ['الحكاية', 'Story'],
   set_comic: ['شوف الحكاية تاني', 'Watch the story again'],
   set_credits: ['عن اللعبة', 'Credits'],

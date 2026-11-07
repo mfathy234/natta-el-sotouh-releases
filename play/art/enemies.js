@@ -10,7 +10,7 @@ function angryBrows(y, spread = 20, w = 5) {
 /* Grumpy pigeon حمامة: grey, shiny green-purple neck, scowl */
 function pigeonArt(frame = 0) {
   const wy = frame ? 20 : 54, wy2 = frame ? 4 : 70;
-  const wing = `<path d="M44 70 Q14 ${wy} 8 ${wy2} Q30 ${wy + 6} 44 ${wy + 24}Z" fill="${K.grey}" ${S(4)}/><path d="M18 ${wy + 6} Q28 ${wy + 12} 36 ${wy + 20}" stroke="${K.greyDark}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const wing = `<path d="M44 70 Q14 ${wy} 8 ${wy2} Q30 ${wy + 6} 44 ${wy + 24}Z" fill="${K.grey}" ${S(4)}/>`;
   return `<ellipse cx="64" cy="118" rx="22" ry="5" fill="${K.ink}" opacity=".0"/>` +
     wing + mirror(64, wing) +
     `<path d="M50 96 L44 114 L64 106 L84 114 L78 96Z" fill="${K.greyDark}" ${S(4)}/>` +

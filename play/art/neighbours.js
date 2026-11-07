@@ -23,6 +23,10 @@ function nbrWindowArt() {
 
 /* The hand at the end of the arm, pointing right: a striped white sleeve cuff and a four-finger glove. frame 0 = open hand, 1 = fist. */
 function nbrHandArt(frame = 0) {
+  return `<g transform="translate(3 2) scale(.92)">${nbrHandShape(frame)}</g>`;
+}
+
+function nbrHandShape(frame) {
   const cuff = `<rect x="0" y="14" width="26" height="36" rx="8" fill="${K.white}" ${S(4)}/>` +
     `<path d="M9 17 V47 M17 17 V47" stroke="${K.blue}" stroke-width="2.5" stroke-linecap="round" opacity=".75"/>` +
     `<rect x="24" y="16" width="9" height="32" rx="4" fill="${K.teal}" ${S(3)}/>`;

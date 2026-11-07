@@ -51,10 +51,10 @@ function shamsSlouch() {
     hose('M64 104 Q42 114 16 106', SHAMS.fur) + shoe(14, 106, SHAMS.hoof) +
     `<g transform="rotate(-10 60 90)">${tuft(60, 88, 20, 19, 12, 3, SHAMS.fur, 4)}</g>` +
     `<g transform="translate(0 8) rotate(-6 60 60)">${shamsHead('calm')}</g>` +
-    shamsScarf(0).replace(/translate/g, 'translate') +
+    `<path d="M62 83 L80 74" stroke="${K.ink}" stroke-width="5.5" stroke-linecap="round"/><path d="M62 83 L80 74" stroke="${K.green}" stroke-width="2.6" stroke-linecap="round"/>` +
+    shamsScarf(0) +
     hose('M42 84 Q36 98 50 100', SHAMS.fur, 6) + glove(52, 100, 7) +
-    hose('M80 84 Q94 92 90 106', SHAMS.fur, 6) + glove(90, 108, 7) +
-    `<path d="M66 82 Q80 76 90 70" stroke="${K.green}" stroke-width="3" fill="none" stroke-linecap="round" transform="translate(0 8)"/>`;
+    hose('M80 84 Q94 92 90 106', SHAMS.fur, 6) + glove(90, 108, 7);
 }
 
 function shamsArt(pose = 'idle') {

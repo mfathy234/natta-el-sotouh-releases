@@ -1,18 +1,18 @@
 /* Settings model, pure and immutable. Everything lives in save.prefs (sanitized here); language, controls, mute and the ghost toggle keep their old
-   top-level save fields. Also the small runtime helpers the rest of the game reads: Calm (reduced motion) and Haptic (vibration). */
+   top-level save fields. Also the small runtime helpers the rest of the game reads: Calm (reduced motion), Quiet (fewer pop-ups) and Haptic (vibration). */
 
 const APP_VERSION = '1.0.0';
-const PREF_BOOLS = ['voices', 'vibrate', 'calm', 'fps'];
+const PREF_BOOLS = ['voices', 'vibrate', 'calm', 'fps', 'quiet'];
 const PREF_LEVELS = ['music', 'sfx'];
 
-const newPrefs = () => ({ music: 100, sfx: 100, voices: true, vibrate: true, calm: false, fps: false });
+const newPrefs = () => ({ music: 100, sfx: 100, voices: true, vibrate: true, calm: false, fps: false, quiet: true });
 
 function sanitizePrefs(raw) {
   const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}, d = newPrefs();
   const level = (v, def) => (Number.isFinite(Number(v)) && v !== null && v !== '' ? Math.max(0, Math.min(100, Math.round(Number(v)))) : def);
   return {
     music: level(r.music, d.music), sfx: level(r.sfx, d.sfx),
-    voices: r.voices !== false, vibrate: r.vibrate !== false, calm: r.calm === true, fps: r.fps === true
+    voices: r.voices !== false, vibrate: r.vibrate !== false, calm: r.calm === true, fps: r.fps === true, quiet: r.quiet !== false
   };
 }
 
@@ -34,6 +34,11 @@ const Calm = {
     if (this.mq === null) this.mq = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : false;
     return Boolean(this.mq && this.mq.matches);
   }
+};
+
+/** Fewer pop-ups (default on): one banner at a time, small combo shouts, merged "+n" pops, rare voice barks. See notify.js. */
+const Quiet = {
+  on() { return typeof UI === 'undefined' || !UI.save || !UI.save.prefs || UI.save.prefs.quiet !== false; }
 };
 
 /** Vibration (Android and a few browsers; iOS Safari has none). */

@@ -79,7 +79,7 @@ function towerLand(s, pl) {
   if (pl.type === 'ground' && pl.floor === s.top) {
     s.won = true; s.over = true; s.overT = 0; s.winT = s.t; Sound.play('mile');
     bannerPush(s, BAWAB.lines.beat, 'boss');
-    if (typeof showPop === 'function') showPop(pick(TOWER_LINES.win));
+    if (typeof showPop === 'function') showPop(pick(TOWER_LINES.win), true);
   }
 }
 const pick2 = arr => arr[Math.floor(Math.random() * arr.length)];

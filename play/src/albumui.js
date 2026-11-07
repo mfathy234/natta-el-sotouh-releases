@@ -39,8 +39,10 @@ function refreshCoinLabels() {
 function toastAchievement(id) { ALBUM.toasts.push(id); if (!ALBUM.showing) nextAchToast(); }
 
 function nextAchToast() {
-  const id = ALBUM.toasts.shift(), box = $('achToast');
-  if (!id) { ALBUM.showing = false; box.classList.remove('show'); return; }
+  const box = $('achToast');
+  if (!ALBUM.toasts.length) { ALBUM.showing = false; box.classList.remove('show'); return; }
+  if (UI.state === 'play' && UI.run && telegraphActive(UI.run)) { ALBUM.showing = true; setTimeout(nextAchToast, NOTIFY.toast.poll); return; }
+  const id = ALBUM.toasts.shift();
   const a = ACHIEVEMENTS.find(x => x.id === id);
   ALBUM.showing = true;
   $('achToastHead').textContent = t('achNew') + ' ' + t('achReward', nf(a.reward));
@@ -48,7 +50,7 @@ function nextAchToast() {
   $('achToastCap').textContent = LANG.cur === 'ar' ? a.capAr : a.capEn;
   box.classList.add('show');
   Sound.play('power');
-  setTimeout(() => { box.classList.remove('show'); setTimeout(nextAchToast, 350); }, 3000);
+  setTimeout(() => { box.classList.remove('show'); setTimeout(nextAchToast, 350); }, Quiet.on() ? NOTIFY.toast.show : 3000);
 }
 
 /* ---------- screens ---------- */

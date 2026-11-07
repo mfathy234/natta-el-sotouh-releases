@@ -37,7 +37,12 @@ function bawabKeyRing(x, y) {
 const bawabArm = (d, fill = K.blueLight) => `<path d="${d}" fill="none" stroke="${K.ink}" stroke-width="12" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${fill}" stroke-width="7" stroke-linecap="round"/>`;
 
 /* pose: 0, 1, 'throw' or 'beat' */
+/* The whole drawing is pulled in to 90% so the feet, the key ring and the raised key stay inside the 160 box. */
 function bawabArt(pose = 0) {
+  return `<g transform="translate(8 2) scale(.9)">${bawabPose(pose)}</g>`;
+}
+
+function bawabPose(pose) {
   if (pose === 'beat') {
     return `<g transform="rotate(14 80 150)">` +
       bawabLeg(66, 52, 152) + bawabLeg(96, 112, 152) + bawabRobe() + bawabHead('dizzy') +

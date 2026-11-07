@@ -258,13 +258,13 @@ const NEIGHBOURS = {
 };
 
 /* Rooftop events, free mode: one about every `every` metres from `first`, picked from `pool` (never twice in a row), announced with a banner.
-   flock: a band at your height lights up, then birds sweep across. prayer: calm slow-mo and golden light, bonus coins. powercut: dark, platforms glow.
+   flock: a band at your height lights up, then birds sweep across. icecream: a cart bell rings from the street, then cones drift up for `time` s (each worth `coins` coins). powercut: dark, platforms glow.
    wedding: firework rockets on ledges launch you. gust: arrows on one side, then a sideways push. */
 const EVENTS = {
   every: 100, first: 100, jitter: 20, gap: 40,
-  pool: ['flock', 'prayer', 'powercut', 'wedding', 'gust'],
+  pool: ['flock', 'icecream', 'powercut', 'wedding', 'gust'],
   flock: { ar: 'سرب حمام عدّي!', en: 'A pigeon flock!', warn: 1.4, birds: 8, speed: 560, band: 76, r: 13 },
-  prayer: { ar: 'وقت الأذان.. الدنيا هديت', en: 'Call to prayer. The city goes calm', time: 3, slow: 0.55, coins: 9 },
+  icecream: { ar: 'عربية الآيس كريم! الحق الكورنيتات', en: 'The ice-cream cart! Catch the cones', warn: 1, time: 4, cones: 7, coins: 2, drift: 26, spread: 120, r: 24 },
   powercut: { ar: 'الكهربا قطعت!', en: 'Power cut!', time: 5, fade: 0.7, dark: 0.82 },
   wedding: { ar: 'فرح في الشارع! اركب الصاروخ', en: 'A wedding! Ride the firework', time: 9, power: 1300, rockets: 3, r: 26 },
   gust: { ar: 'هبّة هوا من الجنب!', en: 'Wind gust!', warn: 1.2, time: 3.2, push: 150 }
@@ -288,14 +288,25 @@ const BAWAB = {
 const COMBO = {
   window: 2.2, points: { stomp: 10, spring: 6, coin: 2 },
   steps: [
-    { n: 3, mult: 1.5, ar: 'عاش!', en: 'Nice!' },
+    { n: 3, mult: 1.5, ar: 'عاش!', en: 'Nice!', quiet: true },
     { n: 6, mult: 2, ar: 'قشطة!', en: 'Smooth!' },
     { n: 10, mult: 3, ar: 'يا جامد!', en: 'Awesome!' },
     { n: 16, mult: 4, ar: 'عنب!', en: 'Grape-tastic!' }
   ]
 };
 
-const BANNER = { time: 2.8, shoutTime: 1.0, y: 142, strips: 2 };
+/* On-screen notices (src/notify.js). One big strip at a time; the rest wait in a queue (best priority first, `gap` s apart) and low-priority ones that waited
+   longer than `stale` s are dropped. Minor notices (ghost, rocket) are small and fade; combo shouts are small, `shoutGap` s apart and skipped while a strip or a
+   telegraph is up. `loud` holds the old busy numbers, used when the "fewer pop-ups" setting is off. */
+const BANNER = { time: 2.4, shoutTime: 0.9, minorTime: 1.6, y: 142, gap: 0.35, stale: 3.2, shoutGap: 3.5, shoutY: 96 };
+const NOTIFY = {
+  prio: { boss: 3, event: 2, tier: 1, minor: 0 },
+  pops: { life: 0.9, max: 3, mergeT: 0.6, rise: 30, size: 17 },
+  line: { gap: 2.2 },
+  toast: { poll: 600, show: 2400 },
+  bark: 3,
+  loud: { gap: 0.1, stale: 99, shoutGap: 0, bark: 1.2, popLife: 1.3, popMax: 99, popRise: 40, popSize: 20, strips: 2 }
+};
 
 /* Ghost race: the best free run is sampled every `dt` s and drawn translucent in later runs. key is its own localStorage entry. */
 const GHOST = { key: 'natta.ghost.v1', dt: 0.2, max: 3000, alpha: 0.4, line: { ar: 'عدّيت شبحك!', en: 'You passed your ghost!' } };
@@ -307,6 +318,6 @@ const WEEKLY = { top: 30, seedBase: 770000, tierShift: 3, reward: 150 };
 const NATTA_DATA = {
   W, H, METER, COIN_SCORE, PHYS, FEEL, TOWER, TOWER_LINES, PLATFORMS, WEIGHT_STOPS, GAP, MAX_UNSAFE_RUN, REACH, COIN, POWERUPS, ENEMIES,
   HEROES, DEFAULT_HERO, CONTROL_MODES, DEFAULT_CONTROLS, CONTROLS, LOOK_SLOTS, SLOT_NAMES, LOOKS, UPGRADES, DAILY, MISSIONS, MILESTONES, FALL_LINES, SKY, PASS, FACADE, SAVE_KEY,
-  TIER_STEP, ORDINALS, TIERS, TOWER_TIERS, NEIGHBOURS, EVENTS, BAWAB, COMBO, BANNER, GHOST, WEEKLY
+  TIER_STEP, ORDINALS, TIERS, TOWER_TIERS, NEIGHBOURS, EVENTS, BAWAB, COMBO, BANNER, NOTIFY, GHOST, WEEKLY
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = NATTA_DATA;

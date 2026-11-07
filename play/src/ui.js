@@ -23,7 +23,22 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-function showPop(text) {
+/** A line at the top (milestone, fall line, target). Calm mode keeps them apart, waits while a strip or a telegraph is up, and drops stale ones. force skips the wait. */
+function showPop(text, force) {
+  const run = UI.run, nowS = performance.now() / 1000, blocked = Boolean(run && UI.state === 'play' && (noteStrips(run).length || telegraphActive(run)));
+  if (lineDecide(nowS, NoteLine.last, blocked, force) === 'wait') {
+    if (!NoteLine.pending) NoteLine.pending = { text, at: nowS };
+    else NoteLine.pending.text = text;
+    clearTimeout(NoteLine.timer);
+    NoteLine.timer = setTimeout(() => {
+      const q = NoteLine.pending;
+      NoteLine.pending = null;
+      if (q && performance.now() / 1000 - q.at < BANNER.stale && UI.state === 'play') showPop(q.text);
+    }, 500);
+    return;
+  }
+  NoteLine.pending = null;
+  NoteLine.last = nowS;
   const el = $('pop');
   el.textContent = text;
   el.classList.remove('go');

@@ -1,6 +1,7 @@
 /* Rooftop events, free mode: about every EVENTS.every metres one event from the pool (see EVENTS in data.js), announced with a banner.
-   s.ev = { id, t, phase, ... } while one runs. flock: a red band at your height, then a pigeon flock sweeps across it. prayer: calm slow-mo, golden
-   light, bonus coins. powercut: dark, platforms glow. wedding: firework rockets on ledges launch you. gust: arrows on one side, then a sideways push. */
+   s.ev = { id, t, phase, ... } while one runs. flock: a red band at your height, then a pigeon flock sweeps across it. icecream: the cart's bell rings
+   from the street, then cones drift up for a few seconds and are worth coins. powercut: dark, platforms glow. wedding: firework rockets on ledges
+   launch you. gust: arrows on one side, then a sideways push. Nothing here changes the game speed. */
 
 function eventsInit(s, startM) {
   s.ev = null; s.evLast = '';
@@ -17,7 +18,6 @@ function eventAllowed(s, id) {
 function startEvent(s, id) {
   const E = EVENTS[id], p = s.p;
   s.ev = { id, t: 0, phase: 'warn', k: 0, dir: s.rnd() < 0.5 ? -1 : 1, sy: clamp(p.y - s.cam, 150, H - 150), birds: false, fired: 0 };
-  if (id === 'prayer') eventPrayerCoins(s);
   bannerPush(s, { ar: E.ar, en: E.en }, 'event');
   Sound.play(id === 'flock' || id === 'gust' ? 'warn' : 'mile');
 }
@@ -25,20 +25,25 @@ function startEvent(s, id) {
 function endEvent(s) {
   const id = s.ev.id;
   if (id === 'wedding') s.plats.forEach(pl => { pl.rocket = null; });
+  if (id === 'icecream') s.coins = s.coins.filter(c => !c.cone || c.got);
   s.evLast = id;
   s.ev = null;
   s.nextEvM = Math.max(s.meters + EVENTS.every + rr(s, -EVENTS.jitter, EVENTS.jitter), s.meters + EVENTS.gap);
 }
 
-/** Time scale from the running event (the call to prayer slows the game gently). */
-const eventTimeScale = s => (s.ev && s.ev.id === 'prayer' ? 1 - (1 - EVENTS.prayer.slow) * s.ev.k : 1);
-
-function eventPrayerCoins(s) {
-  const p = s.p, E = EVENTS.prayer;
-  let n = 0;
-  s.plats.filter(pl => pl.y < p.y - 40 && pl.y - s.cam > -20 && (pl.kind === 'normal' || pl.kind === 'spring')).sort((a, b) => b.y - a.y).forEach(pl => {
-    for (let i = -1; i <= 1 && n < E.coins; i++, n++) s.coins.push({ x: wrapX(pl.x + i * 26), y: pl.y - 46 - (i === 0 ? 14 : 0), got: false, ph: i });
-  });
+/** Ice-cream cart: after the bell, E.cones cones appear around the hero one after another and drift up; each is worth E.coins coins. */
+function updateIceCream(s, ev, dt) {
+  const E = EVENTS.icecream, p = s.p;
+  if (ev.phase === 'warn') {
+    if (ev.t >= E.warn) { ev.phase = 'sweet'; ev.t = 0; ev.spawned = 0; }
+    return;
+  }
+  while (ev.spawned < E.cones && ev.t >= (ev.spawned / E.cones) * (E.time - 1.2)) {
+    s.coins.push({ x: wrapX(p.x + rr(s, -E.spread, E.spread)), y: p.y - rr(s, 30, 190), got: false, ph: ev.spawned * 0.37, cone: true, vy: -E.drift });
+    ev.spawned++;
+  }
+  s.coins.forEach(c => { if (c.cone && !c.got) c.y += c.vy * dt; });
+  if (ev.t >= E.time) endEvent(s);
 }
 
 function updateFlock(s, ev, dt) {
@@ -83,10 +88,8 @@ function updateEvents(s, dt) {
   const ev = s.ev, E = EVENTS[ev.id];
   ev.t += dt;
   if (ev.id === 'flock') updateFlock(s, ev, dt);
-  else if (ev.id === 'prayer') {
-    ev.k = clamp(Math.min(ev.t / 0.5, (E.time - ev.t) / 0.5), 0, 1);
-    if (ev.t >= E.time) endEvent(s);
-  } else if (ev.id === 'powercut') {
+  else if (ev.id === 'icecream') updateIceCream(s, ev, dt);
+  else if (ev.id === 'powercut') {
     ev.k = clamp(Math.min(ev.t / E.fade, (E.time - ev.t) / E.fade), 0, 1);
     if (ev.t >= E.time) endEvent(s);
   } else if (ev.id === 'wedding') updateWedding(s, ev, dt);
@@ -109,7 +112,7 @@ function eventBounce(s, pl, power) {
   if (!pl.rocket || Math.abs(dxWrap(s.p.x, pl.x)) > EVENTS.wedding.r) return power;
   pl.rocket.fired = 0.7;
   for (let i = 0; i < 12; i++) s.parts.push({ kind: 'spark', x: pl.x + rand(-10, 10), y: pl.y - 20, vx: rand(-120, 120), vy: rand(-260, -60), r: rand(3, 6), t: 0, life: rand(0.5, 0.9) });
-  bannerPush(s, { ar: 'يلا يا صاروخ!', en: 'Blast off!' }, 'shout');
+  bannerPush(s, { ar: 'يلا يا صاروخ!', en: 'Blast off!' }, 'minor');
   return Math.max(power, EVENTS.wedding.power);
 }
 
@@ -147,18 +150,7 @@ function renderEventBack(s) {
   const ev = s.ev;
   if (!ev) return;
   const ctx = Eng.ctx;
-  if (ev.id === 'prayer') {
-    ctx.save();
-    const g = ctx.createRadialGradient(W / 2, 90, 10, W / 2, 90, 520);
-    g.addColorStop(0, `rgba(255,214,110,${0.7 * ev.k})`); g.addColorStop(1, `rgba(255,170,80,${0.18 * ev.k})`);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = 0.16 * ev.k; ctx.fillStyle = K.white;
-    for (let i = 0; i < 7; i++) {
-      const a = -0.9 + i * 0.3 + Math.sin(Eng.clock * 0.4) * 0.05;
-      ctx.beginPath(); ctx.moveTo(W / 2, 40); ctx.lineTo(W / 2 + Math.tan(a) * 700 - 24, 700); ctx.lineTo(W / 2 + Math.tan(a) * 700 + 24, 700); ctx.closePath(); ctx.fill();
-    }
-    ctx.restore();
-  } else if (ev.id === 'powercut') {
+  if (ev.id === 'powercut') {
     ctx.save();
     ctx.fillStyle = `rgba(12,8,34,${EVENTS.powercut.dark * ev.k})`; ctx.fillRect(0, 0, W, H);
     ctx.restore();
@@ -175,6 +167,13 @@ function renderEventBack(s) {
   } else if (ev.id === 'wedding') renderWeddingBursts(clamp(Math.min(ev.t / 0.4, (EVENTS.wedding.time - ev.t) / 0.8), 0, 1));
 }
 
+/** The ice-cream cart rolls in along the bottom edge, rings its bell (two frames) and rolls out again. A little drawing, never a hazard. */
+function renderIceCreamCart(ev) {
+  const E = EVENTS.icecream, total = ev.phase === 'warn' ? ev.t : E.warn + ev.t, inK = clamp(total / 0.6, 0, 1), outK = clamp((E.warn + E.time - total) / 0.6, 0, 1);
+  const side = ev.dir > 0 ? -1 : 1, rest = side < 0 ? 52 : W - 52, x = rest + side * 130 * (1 - Math.min(inK, outK)), y = H - 30;
+  drawSpr('event:cart:' + (Math.floor(Eng.clock * 8) % 2), x, y, { w: 76, h: 66, ay: 1, sx: side < 0 ? 1 : -1, alpha: Math.min(inK, outK) * 0.95, sy: beatBounce(0, 0.03) });
+}
+
 /** After pickups: the flock band, gust arrows and the rockets. */
 function renderEventMid(s) {
   const ev = s.ev, ctx = Eng.ctx, pulse = 0.5 + 0.5 * Math.sin(Eng.clock * 18);
@@ -185,7 +184,8 @@ function renderEventMid(s) {
     drawSpr(`event:rocket:${pl.rocket.fired > 0 ? 1 : 0}`, pl.x, sy + 1, { w: 34, h: 54, ay: 1, sy: pl.rocket.fired > 0 ? 1 : beatBounce(pl.x * 0.01, 0.04) });
   });
   if (!ev) return;
-  if (ev.id === 'flock') {
+  if (ev.id === 'icecream') renderIceCreamCart(ev);
+  else if (ev.id === 'flock') {
     const E = EVENTS.flock, locked = ev.phase === 'warn' && ev.t >= E.warn * 0.6, live = ev.phase === 'sweep';
     if (ev.phase === 'warn' || (live && ev.t < 1.2)) {
       ctx.save();
@@ -210,7 +210,7 @@ function renderEventMid(s) {
   }
 }
 
-/** Over the hero: wind streaks, a lantern glow in the dark, a warm veil in the call to prayer. */
+/** Over the hero: wind streaks and a lantern glow in the dark. */
 function renderEventFront(s) {
   const ev = s.ev;
   if (!ev) return;

@@ -37,6 +37,18 @@ function beadArt() {
     `<circle cx="64" cy="24" r="8" fill="none" ${S(5)}/><circle cx="64" cy="24" r="8" fill="none" stroke="${K.gold}" stroke-width="2.5"/>`;
 }
 
+/* Ice-cream cone كورنيت آيس كريم: waffle cone, a pink and a cream scoop, a cherry. The event bonus pickup. */
+function coneArt() {
+  const hatch = [[50, 74, 68, 96], [64, 70, 76, 92], [78, 68, 84, 82], [52, 92, 76, 74], [60, 104, 80, 80]];
+  return `<path d="M38 62 L90 62 L64 122Z" fill="${K.sand}" ${S(5)}/>` +
+    hatch.map(([a, b, c, d]) => `<path d="M${a} ${b} L${c} ${d}" stroke="${K.sandDark}" stroke-width="3" stroke-linecap="round"/>`).join('') +
+    `<path d="M38 62 L90 62 L64 122Z" fill="none" ${S(5)}/>` +
+    `<circle cx="64" cy="30" r="20" fill="${K.white}" ${S(5)}/>` +
+    `<path d="M32 64 Q30 46 46 44 Q64 40 82 44 Q98 46 96 64 Q90 74 82 66 Q74 76 64 66 Q54 76 46 66 Q38 74 32 64Z" fill="${K.pink}" ${S(5)}/>` +
+    `<path d="M44 52 Q50 46 60 46" stroke="${K.white}" stroke-width="5" fill="none" stroke-linecap="round" opacity=".75"/>` +
+    `<path d="M64 12 Q66 4 74 2" fill="none" ${S(3.5)}/><circle cx="64" cy="14" r="7" fill="${K.red}" ${S(3.5)}/>`;
+}
+
 function starArt(fill = K.gold) {
   return `<path d="M64 12 L78 46 L116 48 L86 72 L96 110 L64 88 L32 110 L42 72 L12 48 L50 46Z" fill="${fill}" ${S(5)}/>`;
 }
@@ -55,6 +67,6 @@ function pauseArt() {
 
 const ITEM_ART = {
   coin: [() => coinArt(0), () => coinArt(1)], kite: [kiteArt], ful: [fulArt], bead: [beadArt],
-  star: [() => starArt()], soundOn: [soundOnArt], soundOff: [soundOffArt], pause: [pauseArt]
+  star: [() => starArt()], cone: [coneArt], soundOn: [soundOnArt], soundOff: [soundOffArt], pause: [pauseArt]
 };
-const ITEM_SIZE = { coin: 22, kite: 38, ful: 36, bead: 32, star: 24, soundOn: 24, soundOff: 24, pause: 24 };
+const ITEM_SIZE = { coin: 22, kite: 38, ful: 36, bead: 32, star: 24, cone: 34, soundOn: 24, soundOff: 24, pause: 24 };
