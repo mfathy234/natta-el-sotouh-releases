@@ -26,8 +26,8 @@ const shawishBack = pose => (pose === 'slouch'
 const shawishBelly = () => `<ellipse cx="60" cy="92" rx="11" ry="12" fill="${SHAWISH.muzzle}" stroke="${K.ink}" stroke-width="2.4"/><ellipse cx="50" cy="80" rx="5" ry="4" fill="${SHAWISH.patch}" opacity=".8"/>`;
 const shawishNeck = () => `<path d="M46 74 Q60 88 74 74" fill="none" stroke="${K.ink}" stroke-width="2.4"/><path d="M60 82 L60 90" stroke="${K.ink}" stroke-width="2.2"/>` +
   `<rect x="55" y="89" width="10" height="7" rx="3.2" fill="${K.gold}" ${S(2.4)}/><circle cx="57.5" cy="92.5" r="1.6" fill="${K.ink}"/>`;
-const shawishBone = () => `<path d="M96 108 H120" ${S(7)} fill="none"/><path d="M96 108 H120" stroke="${K.white}" stroke-width="3.6" stroke-linecap="round"/>` +
-  [[94, 104], [94, 112], [122, 104], [122, 112]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="4" fill="${K.white}" ${S(2.4)}/>`).join('');
+const shawishBone = () => `<path d="M-14 -2 H14" ${S(7.5)} fill="none"/><path d="M-14 -2 H14" stroke="${K.white}" stroke-width="3.8" stroke-linecap="round"/>` +
+  [[-16, -6], [-16, 2], [16, -6], [16, 2]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="4" fill="${K.white}" ${S(2.4)}/>`).join('');
 
-const SHAWISH_BODY = { fur: SHAWISH.fur, foot: shawishFoot, head: shawishHead, back: shawishBack, belly: shawishBelly, neck: shawishNeck, prop: shawishBone };
+const SHAWISH_BODY = { fur: SHAWISH.fur, foot: shawishFoot, head: shawishHead, back: shawishBack, belly: shawishBelly, neck: shawishNeck, prop: shawishBone, propRot: -28, sole: (x, y, r) => crewPaw(x, y, r, SHAWISH.fur, SHAWISH.patch, 1.15) };
 const shawishArt = pose => (pose === 'slouch' ? crewSlouch(SHAWISH_BODY) : crewStand(pose, SHAWISH_BODY));

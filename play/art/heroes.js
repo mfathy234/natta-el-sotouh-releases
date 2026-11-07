@@ -59,12 +59,12 @@ function irisEye(cx, cy, rx, ry, iris, px = 1.5, py = 1.5) {
    when jumping, smug on landing, and the couch slouch for menu, hangar and game over. */
 const MAREI = { fur: K.white, amber: '#c8872e', blue: '#4aa3e8' };
 
-function mareiPaw(x, y, beans, rot = 0) {
+function mareiPaw(x, y, beans, rot = 0, k = 1) {
   const pads = beans
     ? `<ellipse cx="0" cy="2" rx="3.4" ry="2.8" fill="${K.pink}" stroke="${K.ink}" stroke-width="1"/>` +
       [[-4.2, -2.6], [-1.4, -4.2], [1.6, -4.2], [4.4, -2.6]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="1.5" fill="${K.pink}" stroke="${K.ink}" stroke-width=".9"/>`).join('')
     : `<path d="M-2 0 V4 M2 0 V4" stroke="${K.ink}" stroke-width="1.6" stroke-linecap="round"/>`;
-  return `<g transform="translate(${x} ${y}) rotate(${rot})"><ellipse cx="0" cy="0" rx="7.2" ry="6.2" fill="${MAREI.fur}" ${S(3)}/>${pads}</g>`;
+  return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${k})"><ellipse cx="0" cy="0" rx="7.2" ry="6.2" fill="${MAREI.fur}" ${S(3)}/>${pads}</g>`;
 }
 
 function mareiEye(cx, cy, iris, wide) {
@@ -118,26 +118,63 @@ const MAREI_STAND = {
   fall: { tail: [72, 100, 112, 96, 118, 62, 114, 40], mode: 'wide', beans: true, armL: 'M47 68 Q22 62 12 38', armR: 'M73 68 Q98 62 108 38', pL: [11, 33], pR: [109, 33], legL: 'M54 94 Q48 106 52 118', legR: 'M66 94 Q72 106 68 118', fL: [52, 118], fR: [68, 118] }
 };
 
-/* Couch slouch (from the photo): a 3/4 view leaning back against a cushion on the right, torso tilted back, legs stretched out
-   to the left and crossed at the paws, one front paw resting on the belly, the other lying along his side, head turned
-   with the half-lidded look, fluffy tail trailing out behind. */
+/* Fluffy tail along a cubic curve: smooth width, rounded lobes along the edge (no sawtooth), rounded tip. */
+function fluffyTail(p, fill, wMax = 10, sw = 4, bump = 2.4) {
+  const [x0, y0, x1, y1, x2, y2, x3, y3] = p, N = 10, L = [], R = [];
+  let tx = 0, ty = 0;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, u = 1 - t;
+    const x = u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3;
+    const y = u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3;
+    const dx = 3 * u * u * (x1 - x0) + 6 * u * t * (x2 - x1) + 3 * t * t * (x3 - x2);
+    const dy = 3 * u * u * (y1 - y0) + 6 * u * t * (y2 - y1) + 3 * t * t * (y3 - y2);
+    const len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len, w = (4.5 + (wMax - 4.5) * Math.sin(Math.min(1, t * 1.1 + 0.1) * Math.PI * 0.8)) * (t > 0.92 ? 0.8 : 1);
+    L.push([x + nx * w, y + ny * w, nx, ny]); R.push([x - nx * w, y - ny * w, -nx, -ny]);
+    tx = dx / len; ty = dy / len;
+  }
+  const seg = (A, B) => `Q${f1((A[0] + B[0]) / 2 + (A[2] + B[2]) * bump / 2)} ${f1((A[1] + B[1]) / 2 + (A[3] + B[3]) * bump / 2)} ${f1(B[0])} ${f1(B[1])}`;
+  let d = `M${f1(L[0][0])} ${f1(L[0][1])}`;
+  for (let i = 0; i < N; i++) d += ' ' + seg(L[i], L[i + 1]);
+  d += ` Q${f1(x3 + tx * wMax * 1.2)} ${f1(y3 + ty * wMax * 1.2)} ${f1(R[N][0])} ${f1(R[N][1])}`;
+  for (let i = N; i > 0; i--) d += ' ' + seg(R[i], R[i - 1]);
+  return `<path d="${d}Z" fill="${fill}" ${S(sw)}/>`;
+}
+
+/* Couch slouch (from the photo): sitting deep in the couch, torso leaning back to the right, slim legs stretched toward us and crossed
+   at the paws (beans showing), one front paw on the belly, the other lying along his side, head turned with the half-lidded look,
+   fluffy tail curling along the seat. Transforms are step lists (see crew.js) shared with the look anchors in looks.js. */
+/* Mar3y uses the same rig as the crew: the same couch, lean and crossed legs, with his slim body, bare paws (beans toward us) and a fluffy tail. */
+const SLOUCH_MAREI = {
+  body: [['r', 20, 60, 100]],
+  head: [['r', -4, 60, 42], ['t', -60, -42], ['s', 0.78], ['t', 60, 42], ['r', 20, 60, 100], ['t', 1, 1]]
+};
+const SLOUCH_MAREI_HEAD_TURN = -8;
+/* Slouch torso: a smooth tufted body with a couple of soft fur ticks on the chest (no jagged ruff), the part that leans on the couch. */
+const mareiSlouchBody = () => tuft(60, 86, 16.5, 22, 14, 3.4, MAREI.fur, 4) +
+  `<path d="M52 70 Q56 77 60 71 Q64 77 68 70" fill="none" ${S(2.4)}/>`;
+
 /* o.mode: face; o.arms: 'rest' (default), 'lick' (paw to the mouth, o.lick 0 or 1), 'stretch' (both paws up), 'knock' (side paw out to the right, o.reach 0 or 1). */
+function mareiArms(o, { P, H, hand }) {
+  const arms = o.arms || 'rest', sF = P(46, 72), sS = P(74, 72), belly = P(57, 92), side = P(82, 100);
+  const limb = (a, c, b, w = 5.5) => mareiLimb(`M${f1(a.x)} ${f1(a.y)} Q${f1(c[0])} ${f1(c[1])} ${f1(b[0])} ${f1(b[1])}`, w);
+  const paw = (x, y, beans, rot) => mareiPaw(x, y, beans, rot, 1.1);
+  let behind = '', front;
+  if (arms === 'knock') { const e = o.reach ? [161, 67] : [152, 53]; behind = limb(sS, [128, o.reach ? 62 : 50], e) + paw(e[0] + 3, e[1] + 1, true, 90); }
+  else if (arms === 'stretch') behind = limb(sS, [118, 34], [96, 6]) + paw(96, 3, true, 200);
+  else behind = limb(sS, [sS.x + 10, sS.y + 14], [side.x, side.y]) + paw(side.x, side.y + 3, false, 0);
+  if (arms === 'lick') { const m = H(52, 60), q = [m.x + (o.lick ? 0 : 3), m.y + (o.lick ? -1 : 1)]; front = limb(sF, [sF.x - 2, (sF.y + q[1]) / 2 + 6], q, 5) + paw(q[0], q[1], false, -20); }
+  else if (arms === 'stretch') front = limb(sF, [56, 38], [48, 14]) + paw(47, 11, true, 200);
+  else front = limb(sF, [sF.x - 6, sF.y + 14], [belly.x, belly.y]) + paw(belly.x, belly.y, false, -25);
+  return { behind, front };
+}
+const MAREI_BODY = {
+  fur: MAREI.fur, ops: SLOUCH_MAREI, legW: 6, feet: [[65, 117, 14], [52, 119, -14]], bodyShape: mareiSlouchBody,
+  head: mode => mareiHead(mode, 0, SLOUCH_MAREI_HEAD_TURN), sole: (x, y, r) => mareiPaw(x, y, true, r, 1.3),
+  back: () => fluffyTail([54, 104, 30, 110, 8, 98, 8, 68], MAREI.fur, 7.5)
+};
 function mareiSlouch(o = {}) {
-  const cushion = `<path d="M92 30 Q114 22 124 40 L126 112 Q108 124 92 118Z" fill="${K.tealLight}" ${S(4)}/><circle cx="110" cy="76" r="3.2" fill="${K.teal}" stroke="${K.ink}" stroke-width="2"/><path d="M100 40 Q112 36 120 44" stroke="${K.white}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".6"/>`;
-  const torso = `<g transform="translate(26 -2) rotate(17 60 84)">${mareiBody()}${mareiChest()}</g>`;
-  const arms = o.arms || 'rest', head = `<g transform="translate(88 36) scale(.8) translate(-60 -42)">${mareiHead(o.mode || 'calm', 6, -9)}</g>`;
-  const sideArm = arms === 'knock' ? mareiLimb(`M92 64 Q${o.reach ? 122 : 116} ${o.reach ? 60 : 50} ${o.reach ? 148 : 140} ${o.reach ? 66 : 52}`) + mareiPaw(o.reach ? 151 : 143, o.reach ? 67 : 53, true, 90)
-    : arms === 'stretch' ? mareiLimb('M100 62 Q104 34 84 12') + mareiPaw(83, 9, true, 200)
-    : mareiLimb('M100 62 Q108 84 100 106') + mareiPaw(100, 109, false, 0);
-  const frontArm = arms === 'lick' ? `<ellipse cx="${o.lick ? 74 : 77}" cy="52" rx="3" ry="2.2" fill="${K.pink}" ${S(1.4)}/>` + mareiLimb('M86 62 Q92 58 84 52', 5) + mareiPaw(o.lick ? 82 : 85, o.lick ? 51 : 53, false, -20)
-    : arms === 'stretch' ? mareiLimb('M86 62 Q60 40 46 20') + mareiPaw(45, 17, true, 200)
-    : mareiLimb('M86 62 Q70 70 74 84') + mareiPaw(76, 86, false, 40);
-  return cushion + bushyTail([92, 100, 70, 84, 44, 84, 8, 66], MAREI.fur, 9) +
-    mareiLimb('M82 92 Q54 104 26 120') + mareiPaw(23, 121, true, 60) +
-    torso +
-    mareiLimb('M84 100 Q54 96 18 106') + mareiPaw(14, 105, true, 100) +
-    (arms === 'knock' || arms === 'stretch' ? sideArm : mareiLimb('M100 62 Q108 84 100 106') + mareiPaw(100, 109, false, 0)) +
-    (arms === 'stretch' ? frontArm + head : head + (arms === 'knock' ? mareiLimb('M86 62 Q70 70 74 84') + mareiPaw(76, 86, false, 40) : frontArm));
+  const mode = o.mode || 'calm';
+  return crewSlouch(Object.assign({}, MAREI_BODY, { head: () => mareiHead(mode, 0, SLOUCH_MAREI_HEAD_TURN), arms: ctx => mareiArms(o, ctx) }));
 }
 
 function mareiArt(pose = 'idle') {

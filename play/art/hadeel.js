@@ -31,7 +31,11 @@ const hadeelBack = pose => hadeelWings(pose) + (pose === 'slouch'
   ? `<path d="M70 108 Q90 114 100 106 L96 98 Q86 104 74 100Z" fill="${HADEEL.wing}" ${S(3)}/>`
   : `<path d="M54 104 L44 122 L60 114 L76 122 L66 104Z" fill="${HADEEL.wing}" ${S(3)}/>`);
 const hadeelBelly = () => `<ellipse cx="60" cy="90" rx="11" ry="12" fill="${K.white}" stroke="${K.ink}" stroke-width="2.4"/><path d="M54 84 Q60 90 66 84" fill="none" stroke="${HADEEL.wing}" stroke-width="2.2" stroke-linecap="round"/>`;
-const hadeelBread = () => `<ellipse cx="108" cy="108" rx="14" ry="9" fill="${K.sandLight}" ${S(3)}/><path d="M100 104 L104 112 M108 102 L112 112 M116 104 L118 111" stroke="${K.sandDark}" stroke-width="2.4" stroke-linecap="round"/>`;
+const hadeelBread = () => `<ellipse cx="2" cy="-9" rx="14" ry="11" fill="${K.sandLight}" ${S(3)}/><path d="M-6 -14 L-2 -6 M2 -17 L5 -6 M10 -14 L10 -7" stroke="${K.sandDark}" stroke-width="2.4" stroke-linecap="round"/><path d="M-8 -3 Q-2 1 8 -1" fill="none" stroke="${K.white}" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>`;
+const hadeelSole = (x, y, r) => {
+  const toe = (a, b) => `<path d="M0 -1 L${a} ${b}" stroke="${K.ink}" stroke-width="7" stroke-linecap="round"/><path d="M0 -1 L${a} ${b}" stroke="${HADEEL.foot}" stroke-width="3.2" stroke-linecap="round"/>`;
+  return `<g transform="translate(${x} ${y}) rotate(${r})">${toe(-6.5, 6)}${toe(0, 8)}${toe(6.5, 6)}<circle cx="0" cy="-2" r="5" fill="${HADEEL.foot}" ${S(3)}/></g>`;
+};
 
-const HADEEL_BODY = { fur: HADEEL.fur, arm: HADEEL.wing, foot: hadeelFoot, head: hadeelHead, back: hadeelBack, belly: hadeelBelly, prop: hadeelBread };
+const HADEEL_BODY = { fur: HADEEL.fur, arm: HADEEL.wing, foot: hadeelFoot, head: hadeelHead, back: hadeelBack, belly: hadeelBelly, prop: hadeelBread, sole: hadeelSole };
 const hadeelArt = pose => (pose === 'slouch' ? crewSlouch(HADEEL_BODY) : crewStand(pose, HADEEL_BODY));

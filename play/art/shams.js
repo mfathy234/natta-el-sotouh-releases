@@ -44,21 +44,16 @@ function shamsScarf(fly) {
     `<path d="M40 80 Q60 94 80 80 L78 70 Q60 82 42 70Z" fill="${K.red}" ${S(4)}/><path d="M48 80 L47 72 M57 84 L56 75 M66 84 L66 75 M74 80 L74 72" stroke="${K.gold}" stroke-width="3" stroke-linecap="round"/>`;
 }
 
-/* Sitting, chewing a straw, legs stretched out and crossed, one hoof-glove on her knee. */
-function shamsSlouch() {
-  return `<path d="M70 108 Q92 112 98 100" fill="none" stroke="${K.ink}" stroke-width="6" stroke-linecap="round"/>` +
-    hose('M54 100 Q36 108 14 112', SHAMS.fur) + shoe(12, 113, SHAMS.hoof) +
-    hose('M64 104 Q42 114 16 106', SHAMS.fur) + shoe(14, 106, SHAMS.hoof) +
-    `<g transform="rotate(-10 60 90)">${tuft(60, 88, 20, 19, 12, 3, SHAMS.fur, 4)}</g>` +
-    `<g transform="translate(0 8) rotate(-6 60 60)">${shamsHead('calm')}</g>` +
-    `<path d="M62 83 L80 74" stroke="${K.ink}" stroke-width="5.5" stroke-linecap="round"/><path d="M62 83 L80 74" stroke="${K.green}" stroke-width="2.6" stroke-linecap="round"/>` +
-    shamsScarf(0) +
-    hose('M42 84 Q36 98 50 100', SHAMS.fur, 6) + glove(52, 100, 7) +
-    hose('M80 84 Q94 92 90 106', SHAMS.fur, 6) + glove(90, 108, 7);
-}
+const shamsCup = () => `<path d="M-7 -15 H7 L5.6 6 H-5.6Z" fill="#fff4d8" ${S(2.6)}/><path d="M-6 -9 H6 L5 5 H-5Z" fill="${K.coral}"/><path d="M-3.5 -12 L-3 0" stroke="${K.white}" stroke-width="2" stroke-linecap="round" opacity=".8"/>` +
+  `<path d="M2 -9 L5 -23 L11 -23" fill="none" stroke="${K.ink}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 -9 L5 -23 L11 -23" fill="none" stroke="${K.green}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+const SHAMS_BODY = {
+  fur: SHAMS.fur, foot: (x, y, f) => shoe(x, y, SHAMS.hoof, f), sole: (x, y, r) => crewHoof(x, y, r, SHAMS.hoof, K.sand), head: shamsHead,
+  back: () => `<path d="M68 104 Q82 106 84 97" fill="none" stroke="${K.ink}" stroke-width="6" stroke-linecap="round"/>`,
+  neck: () => shamsScarf(0), prop: shamsCup, propRot: -8
+};
 
 function shamsArt(pose = 'idle') {
-  if (pose === 'slouch') return shamsSlouch();
+  if (pose === 'slouch') return crewSlouch(SHAMS_BODY);
   const L = SHAMS_LIMBS[pose] || SHAMS_LIMBS.idle, fly = pose === 'fall' ? -12 : pose === 'up' ? 8 : 0;
   const mode = pose === 'up' || pose === 'fall' ? 'wide' : pose === 'land' ? 'smug' : 'calm';
   return hose(L.legL, SHAMS.fur) + hose(L.legR, SHAMS.fur) + shoe(L.fL[0], L.fL[1], SHAMS.hoof) + shoe(L.fR[0], L.fR[1], SHAMS.hoof, -1) +

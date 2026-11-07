@@ -7,8 +7,8 @@ const MOOD_SIZE = { w: 129, h: 84 };
 const GLASS_VB = '0 0 24 28';
 
 /** A tea glass (istikana) with a saucer, standing on y = 28 of its own box. */
-function teaGlassArt() {
-  return `<ellipse cx="12" cy="26" rx="10" ry="2.6" fill="${K.white}" ${S(2.2)}/>` +
+function teaGlassArt(saucer = true) {
+  return (saucer ? `<ellipse cx="12" cy="26" rx="10" ry="2.6" fill="${K.white}" ${S(2.2)}/>` : "") +
     `<path d="M5 6 L7 24 Q12 26 17 24 L19 6Z" fill="#fff4d8" ${S(2.6)}/><path d="M5.8 11 L7.6 23.4 Q12 25 16.4 23.4 L18.2 11Z" fill="#b5541f"/>` +
     `<path d="M5 6 H19" stroke="${K.gold}" stroke-width="2.4" stroke-linecap="round"/><path d="M9 13 L10 20" stroke="${K.white}" stroke-width="2" stroke-linecap="round" opacity=".7"/>`;
 }

@@ -50,17 +50,12 @@ const LOOK_ANCHORS = {
   shawish: { hat: { x: 60, y: 13, s: 0.62 }, jasmine: { x: 60, y: 19, s: 0.89 }, eyes: { x: 60, y: 36, s: 0.96 }, neck: { x: 60, y: 82, s: 0.72 } }
 };
 const LOOK_FALL_DY = { marei: 0 };
-/* Head transform in the slouch pose (translate after rotate about cx, cy), and the body tilt for the neck. */
+/* Slouch transforms are the step lists that draw the pose (SLOUCH_* in heroes.js and crew.js): head for hat, eyes and jasmine, body for the neck slot.
+   eyesDx is how far the face is turned inside the head. */
 const LOOK_SLOUCH = {
-  marei: { head: { tx: 22, ty: 0, rot: 8, cx: 60, cy: 52 }, neck: { tx: 18, ty: 6, rot: -24, cx: 68, cy: 92 } },
-  crew: { head: { tx: 0, ty: 8, rot: -6, cx: 60, cy: 60 }, neck: { tx: 0, ty: 0, rot: -10, cx: 60, cy: 90 } }
+  marei: { head: [...SLOUCH_MAREI.head, ...SLOUCH_BASE], neck: [...SLOUCH_MAREI.body, ...SLOUCH_BASE], eyesDx: -8 },
+  crew: { head: [...SLOUCH_CREW.head, ...SLOUCH_BASE], neck: [...SLOUCH_CREW.body, ...SLOUCH_BASE], eyesDx: 0 }
 };
-
-/** Rotate (x, y) by `rot` degrees about (cx, cy), then translate. */
-function lookXform(x, y, t) {
-  const a = (t.rot * Math.PI) / 180, dx = x - t.cx, dy = y - t.cy;
-  return [t.cx + dx * Math.cos(a) - dy * Math.sin(a) + t.tx, t.cy + dx * Math.sin(a) + dy * Math.cos(a) + t.ty];
-}
 
 /** Where a look sits on a hero in a pose: { x, y, s, rot } in hero-sprite units, or null when the hero has no anchor. */
 function lookPlace(heroId, look, pose) {
@@ -69,9 +64,8 @@ function lookPlace(heroId, look, pose) {
   const a = A[look.id] || A[look.slot];
   if (!a) return null;
   if (pose === 'slouch') {
-    const T = (LOOK_SLOUCH[heroId] || LOOK_SLOUCH.crew)[look.slot === 'neck' ? 'neck' : 'head'];
-    const [x, y] = lookXform(a.x, a.y, T);
-    return { x, y, s: a.s, rot: T.rot };
+    const L = LOOK_SLOUCH[heroId] || LOOK_SLOUCH.crew, p = slouchPoint(look.slot === 'neck' ? L.neck : L.head, a.x + (look.slot === 'eyes' ? L.eyesDx : 0), a.y);
+    return { x: p.x, y: p.y, s: a.s * p.k, rot: p.rot };
   }
   return { x: a.x, y: a.y + (pose === 'fall' ? (LOOK_FALL_DY[heroId] == null ? 2 : LOOK_FALL_DY[heroId]) : 0), s: a.s, rot: 0 };
 }

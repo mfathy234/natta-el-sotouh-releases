@@ -29,7 +29,9 @@ const battaBack = pose => (pose === 'slouch'
   ? `<path d="M72 106 Q94 108 98 92 Q88 96 82 94Z" fill="${K.woodDark}" ${S(3)}/>`
   : battaWings(pose) + `<path d="M74 98 Q94 98 96 82 Q86 88 78 86Z" fill="${K.woodDark}" ${S(3)}/>`);
 const battaBelly = () => `<ellipse cx="60" cy="92" rx="11" ry="12" fill="${BATTA.belly}" stroke="${K.ink}" stroke-width="2.4"/><path d="M52 90 Q60 96 68 90 M54 98 Q60 102 66 98" fill="none" stroke="${K.sandDark}" stroke-width="2" stroke-linecap="round"/>`;
-const battaGlass = () => `<path d="M86 112 H106 L103 130 H89Z" fill="${K.tea}" ${S(2.8)}/><path d="M92 104 Q90 98 94 94 M99 104 Q97 98 101 94" fill="none" stroke="${K.white}" stroke-width="3" stroke-linecap="round" opacity=".85"/>`;
+const battaGlass = () => `<g transform="translate(-12 -20)">${teaGlassArt(false)}</g>` +
+  `<path d="M-3 -24 Q-6 -29 -2 -33 M3 -24 Q0 -29 4 -33" fill="none" stroke="${K.white}" stroke-width="3" stroke-linecap="round" opacity=".9"/>`;
+const battaSole = (x, y, r) => `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-3.5 -9 Q-12 3 -13 9 Q-8 13 -5 10 Q0 14 5 10 Q8 13 13 9 Q12 3 3.5 -9Q0 -11 -3.5 -9Z" fill="${BATTA.foot}" ${S(3)}/><path d="M-3 -4 L-6 9 M0 -4 V10 M3 -4 L6 9" stroke="${K.ink}" stroke-width="1.8" stroke-linecap="round" fill="none"/></g>`;
 
-const BATTA_BODY = { fur: BATTA.chest, body: BATTA.chest, foot: battaFoot, head: battaHead, back: battaBack, belly: battaBelly, prop: battaGlass };
+const BATTA_BODY = { fur: BATTA.chest, body: BATTA.chest, foot: battaFoot, head: battaHead, back: battaBack, belly: battaBelly, prop: battaGlass, propRot: 6, sole: battaSole };
 const battaArt = pose => (pose === 'slouch' ? crewSlouch(BATTA_BODY) : crewStand(pose, BATTA_BODY));

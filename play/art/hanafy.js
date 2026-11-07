@@ -25,8 +25,8 @@ const hanafyBlanket = () => `<path d="M41 82 Q60 93 79 82 L80 97 Q60 108 40 97Z"
 const hanafyTail = pose => (pose === 'slouch'
   ? hose('M70 108 Q92 112 98 100', HANAFY.fur, 5) + `<ellipse cx="99" cy="97" rx="5" ry="6" fill="${HANAFY.mane}" ${S(2.5)}/>`
   : hose('M76 100 Q94 104 92 116', HANAFY.fur, 5) + `<ellipse cx="92" cy="118" rx="5" ry="6.5" fill="${HANAFY.mane}" ${S(2.5)}/>`);
-const hanafyCarrot = () => `<path d="M96 104 Q112 98 122 106 Q110 114 96 112Z" fill="${K.orange}" ${S(3)}/><path d="M104 104 L106 108 M112 105 L113 109" stroke="${K.copper}" stroke-width="2" stroke-linecap="round"/>` +
-  `<path d="M96 106 L88 100 M96 108 L86 108 M96 110 L89 115" stroke="${K.green}" stroke-width="3.5" stroke-linecap="round"/>`;
+const hanafyCarrot = () => `<path d="M-3 12 L-9 24 M0 12 L0 26 M3 12 L9 24" stroke="${K.green}" stroke-width="4" stroke-linecap="round"/>` +
+  `<path d="M-6 -14 Q0 -19 6 -14 L3 11 Q0 13 -3 11Z" fill="${K.orange}" ${S(3)}/><path d="M-3 -6 L1 -4 M0 2 L3.5 4" stroke="${K.copper}" stroke-width="2" stroke-linecap="round"/>`;
 
-const HANAFY_BODY = { fur: HANAFY.fur, foot: (x, y, f) => shoe(x, y, HANAFY.hoof, f), head: hanafyHead, back: hanafyTail, belly: hanafyBlanket, prop: hanafyCarrot };
+const HANAFY_BODY = { fur: HANAFY.fur, foot: (x, y, f) => shoe(x, y, HANAFY.hoof, f), head: hanafyHead, back: hanafyTail, belly: hanafyBlanket, prop: hanafyCarrot, propRot: 14, sole: (x, y, r) => crewHoof(x, y, r, HANAFY.hoof, HANAFY.muzzle) };
 const hanafyArt = pose => (pose === 'slouch' ? crewSlouch(HANAFY_BODY) : crewStand(pose, HANAFY_BODY));
